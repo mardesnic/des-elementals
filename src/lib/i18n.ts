@@ -29,7 +29,6 @@ const en = {
   next: 'Next level',
   finale: 'You did it all!',
   finaleText: 'Sun and rain woke the whole garden, and a rainbow came out!',
-  playAgain: 'Play again from level 1',
   elements: {
     fire: 'Fire',
     water: 'Water',
@@ -88,7 +87,6 @@ const hr: Strings = {
   next: 'Sljedeća razina',
   finale: 'Sve je riješeno!',
   finaleText: 'Sunce i kiša probudili su cijeli vrt, a izašla je i duga!',
-  playAgain: 'Igraj opet od 1. razine',
   elements: {
     fire: 'Vatra',
     water: 'Voda',

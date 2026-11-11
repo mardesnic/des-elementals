@@ -214,20 +214,22 @@ export default function App() {
             <section className='card solved'>
               <h2>{last ? t.finale : t.solved}</h2>
               <p className='solved__text'>{last ? t.finaleText : t.together}</p>
-              <div className='solved__actions'>
-                <button
-                  className='button'
-                  onClick={() => start(nextLevel(level.id).id)}
-                >
-                  {last ? t.playAgain : t.next}
-                </button>
-                <button
-                  className='button button--secondary'
-                  onClick={() => setView('levels')}
-                >
-                  {t.levels}
-                </button>
-              </div>
+              {!last && (
+                <div className='solved__actions'>
+                  <button
+                    className='button'
+                    onClick={() => start(nextLevel(level.id).id)}
+                  >
+                    {t.next}
+                  </button>
+                  <button
+                    className='button button--secondary'
+                    onClick={() => setView('levels')}
+                  >
+                    {t.levels}
+                  </button>
+                </div>
+              )}
             </section>
           ) : (
             <div className='bar'>
