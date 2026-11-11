@@ -62,6 +62,14 @@ const en = {
   on: 'On',
   off: 'Off',
   source: 'Source',
+  progress: 'Progress',
+  progressCount: (done: number, total: number) =>
+    `Levels done: ${done} / ${total}`,
+  resetProgress: 'Reset progress',
+  resetAsk: 'Every level will be unsolved again, and you start from level 1.',
+  resetYes: 'Yes, reset',
+  cancel: 'Cancel',
+  resetDone: 'Progress reset.',
 };
 
 export type Strings = typeof en;
@@ -112,6 +120,14 @@ const hr: Strings = {
   on: 'Uključen',
   off: 'Isključen',
   source: 'Izvorni kod',
+  progress: 'Napredak',
+  progressCount: (done: number, total: number) =>
+    `Riješene razine: ${done} / ${total}`,
+  resetProgress: 'Resetiraj napredak',
+  resetAsk: 'Sve razine opet će biti neriješene i krećeš od 1. razine.',
+  resetYes: 'Da, resetiraj',
+  cancel: 'Odustani',
+  resetDone: 'Napredak je resetiran.',
 };
 
 export const STRINGS: Record<Lang, Strings> = { en, hr };

@@ -133,6 +133,15 @@ export default function App() {
     play({ steps: [newGame(level)] });
   };
 
+  // Every level unsolved again, starting from the first.
+  const resetProgress = () => {
+    stopWalking();
+    setProgress([]);
+    setStore({ game: newGame(LEVELS[0]) });
+    setHistory([]);
+    setBump(undefined);
+  };
+
   const n = LEVELS.indexOf(level) + 1;
   const last = n === LEVELS.length;
 
@@ -171,7 +180,14 @@ export default function App() {
         <Levels current={game.level} progress={progress} onPick={start} t={t} />
       )}
       {view === 'settings' && (
-        <SettingsView settings={settings} setSettings={setSettings} t={t} />
+        <SettingsView
+          settings={settings}
+          setSettings={setSettings}
+          done={LEVELS.filter((l) => progress.includes(l.id)).length}
+          total={LEVELS.length}
+          onReset={resetProgress}
+          t={t}
+        />
       )}
 
       {view === 'play' && (

@@ -31,6 +31,7 @@
   --glow-fire: #ffe066;
   --glow-water: #a5d8ff;
   --cloud: #f1f3f5;
+  --danger: #e03131;
   --ring: #ffffff;
   --radius: 18px;
 
@@ -74,6 +75,7 @@
     --glow-fire: #b8860b;
     --glow-water: #1971c2;
     --cloud: #ced4da;
+    --danger: #c92a2a;
     --ring: #e8eaee;
   }
 }
@@ -175,6 +177,21 @@ h2 {
 .button--secondary {
   background: var(--bg);
   color: var(--text);
+}
+
+.button--danger {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.button:disabled {
+  opacity: 0.4;
+}
+
+.reset {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
 }
 
 .button--small {

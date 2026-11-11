@@ -21,7 +21,7 @@ On your phone, open it and choose **Add to Home Screen** (Safari) or **Install a
 - Every obstacle on a level is needed, so there are no shortcuts
 - Nothing you do can make a level unwinnable
 - Undo and Start over
-- Picks up where you left off after a reload, and remembers which levels are done
+- Picks up where you left off after a reload, and remembers which levels are done; progress can be reset in Settings
 - Keeps the screen on while you play
 - In English and Croatian, following the phone's language unless you pick one
 - Light and dark mode
