@@ -291,13 +291,14 @@ h2 {
   width: 86%;
   height: 86%;
   border-radius: 50%;
+  /* A light disc keeps water visible on water. */
+  background: color-mix(in srgb, var(--ring) 60%, transparent);
   font-size: calc(var(--unit) * 0.6);
   line-height: 1;
 }
 
 /* The one that moves next has a ring and bobs gently. */
 .friend--active .friend__face {
-  background: color-mix(in srgb, var(--ring) 55%, transparent);
   box-shadow: 0 0 0 3px var(--accent);
   animation: bob 1.4s ease-in-out infinite;
 }

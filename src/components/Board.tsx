@@ -33,6 +33,7 @@ export function Board({
   won,
   bump,
   onTap,
+  onBumpDone,
   onSwipe,
   t,
 }: {
@@ -43,6 +44,8 @@ export function Board({
   // The last one that couldn't move, counted so each bump shakes again.
   bump?: Bump;
   onTap: (i: number) => void;
+  // The shake is over, so the bob can come back.
+  onBumpDone: () => void;
   onSwipe: (from: number, dx: number, dy: number) => void;
   t: Strings;
 }) {
@@ -134,6 +137,7 @@ export function Board({
               className={
                 stuck ? 'friend__face friend__face--stuck' : 'friend__face'
               }
+              onAnimationEnd={stuck ? onBumpDone : undefined}
             >
               {FACES[e]}
             </span>

@@ -158,6 +158,7 @@ export default function App() {
               won={game.won}
               bump={bump}
               onTap={(i) => play(tap(game, i))}
+              onBumpDone={() => setBump(undefined)}
               onSwipe={onSwipe}
               t={t}
             />
