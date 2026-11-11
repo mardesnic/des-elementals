@@ -61,7 +61,7 @@ export type Turn = { steps: Game[]; stuck?: Element };
 
 // What a tap on square i does. On someone, it picks them. Elsewhere, the
 // one picked walks there, or up to an ice or bramble there and changes it.
-// If they can't but the other one can, the other one goes.
+// If they can't, they shake; the other one never moves on its own.
 export function tap(
   game: Game,
   i: number,
@@ -75,11 +75,8 @@ export function tap(
     return {
       steps: there === game.active ? [] : [{ ...game, active: there }],
     };
-  for (const e of [game.active, ...everyone.filter((o) => o !== game.active)]) {
-    const steps = walkTo(game, e, i, level);
-    if (steps) return { steps };
-  }
-  return { steps: [], stuck: game.active };
+  const steps = walkTo(game, game.active, i, level);
+  return steps ? { steps } : { steps: [], stuck: game.active };
 }
 
 // Moves the active one a square up, right, down or left.

@@ -102,11 +102,12 @@ describe('tap on small boards', () => {
     expect(game.state.tiles[3]).toBe('water');
   });
 
-  it('moves the other one when only it can get there', () => {
+  it('only moves the one picked, even when the other could get there', () => {
     const { go } = play(['F#.W', 'ts#.']);
-    const { steps, game } = go(2);
-    expect(steps.map((g) => g.state.at.water)).toEqual([2]);
-    expect(game.active).toBe('water');
+    const turn = go(2);
+    expect(turn).toMatchObject({ steps: [], stuck: 'fire' });
+    expect(turn.game.active).toBe('fire');
+    expect(turn.game.state.at.water).toBe(3);
   });
 
   it('stops a walk on the win', () => {
