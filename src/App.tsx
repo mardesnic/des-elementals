@@ -104,7 +104,7 @@ export default function App() {
       setStore({ game: next });
       if (next.won) {
         setProgress(recordWin(progress, next));
-        setCelebrating(true);
+        if (next.level === LEVELS[LEVELS.length - 1].id) setCelebrating(true);
         cheer();
       }
       walking.current =
