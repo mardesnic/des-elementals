@@ -22,15 +22,20 @@ export function Levels({
         const levels = levelsOf(world);
         if (!levels.length) return null;
         return (
-          <div key={world} className='world'>
-            <h3 className='world__name'>
+          <div
+            key={world}
+            className='world'
+            role='group'
+            aria-label={t.worlds[world]}
+          >
+            {/* Who is in the world, shown by their pictures only. */}
+            <div className='world__name'>
               {elementsIn(parse(levels[0])).map((e) => (
                 <span key={e} className='world__friend'>
                   <Friend element={e} home={false} />
                 </span>
               ))}
-              {t.worlds[world]}
-            </h3>
+            </div>
             <div className='levels'>
               {levels.map((level) => {
                 const n = LEVELS.indexOf(level) + 1;
