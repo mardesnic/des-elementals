@@ -8,7 +8,7 @@ const WATER = 2;
 const ICE = 3;
 const BRAMBLE = 4;
 // Fire holds the brazier to keep the grate up; water the wheel for the
-// sluice. Fire wins on the torch, water on the spring.
+// sluice. Each wins in its own temple.
 const BRAZIER = 5;
 const GRATE = 6;
 const WHEEL = 7;

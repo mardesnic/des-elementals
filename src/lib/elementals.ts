@@ -1,6 +1,6 @@
 // The rules: a few element friends on a small board of tiles, who win when
-// each of them wakes its own place: fire lights the torch, water fills the
-// spring.
+// each of them reaches its own temple: there fire becomes the sun and water
+// a rain cloud.
 
 export const ELEMENTS = ['fire', 'water'] as const;
 export type Element = (typeof ELEMENTS)[number];
@@ -16,15 +16,18 @@ export const TILES = {
   A: 'grate',
   b: 'wheel',
   B: 'sluice',
-  t: 'torch',
-  s: 'spring',
+  t: 'fireTemple',
+  s: 'waterTemple',
 } as const;
 export type Tile = (typeof TILES)[keyof typeof TILES];
 
 // Each element has its own place to wake, and its own thing to hold that
 // opens a way for the other: fire keeps the brazier burning and the grate
 // stays up; water turns the wheel and the sluice stays up.
-const HOME: Partial<Record<Tile, Element>> = { torch: 'fire', spring: 'water' };
+const HOME: Partial<Record<Tile, Element>> = {
+  fireTemple: 'fire',
+  waterTemple: 'water',
+};
 const HOLDER: Partial<Record<Tile, Element>> = {
   brazier: 'fire',
   wheel: 'water',
@@ -98,7 +101,7 @@ export function isHeld(s: State, e: Element, besides?: Element): boolean {
   return e !== besides && at !== undefined && HOLDER[s.tiles[at]] === e;
 }
 
-// Whether square i is woken: a torch, spring, brazier or wheel with its own
+// Whether square i is woken: a temple, brazier or wheel with its own
 // element on it. Anyone else can stand there, but nothing happens.
 export function isAwake(s: State, i: number): boolean {
   const owner = HOME[s.tiles[i]] ?? HOLDER[s.tiles[i]];
@@ -121,8 +124,8 @@ export type Outcome = 'step' | 'blocked' | { becomes: Tile };
 export function outcome(e: Element, tile: Tile, open: boolean): Outcome {
   switch (tile) {
     case 'grass':
-    case 'torch':
-    case 'spring':
+    case 'fireTemple':
+    case 'waterTemple':
     case 'brazier':
     case 'wheel':
       return 'step';

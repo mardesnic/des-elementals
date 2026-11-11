@@ -67,11 +67,11 @@ describe('levels', () => {
     for (const row of level.rows) expect(row).toHaveLength(width);
   });
 
-  it.each(LEVELS)('$id has fire, water, a torch and a spring', (level) => {
+  it.each(LEVELS)('$id has fire, water and their temples', (level) => {
     const s = parse(level);
     expect(elementsIn(s)).toEqual(['fire', 'water']);
-    expect(s.tiles.filter((t) => t === 'torch')).toHaveLength(1);
-    expect(s.tiles.filter((t) => t === 'spring')).toHaveLength(1);
+    expect(s.tiles.filter((t) => t === 'fireTemple')).toHaveLength(1);
+    expect(s.tiles.filter((t) => t === 'waterTemple')).toHaveLength(1);
     expect(isWon(s)).toBe(false);
   });
 

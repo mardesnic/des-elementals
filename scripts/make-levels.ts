@@ -145,7 +145,7 @@ function randomBoard(slot: Slot, rnd: () => number): string[] {
     }
   }
 
-  // The torch for fire and the spring for water.
+  // The temples, for fire and for water.
   cells[free()] = 't';
   cells[free()] = 's';
   cells[free()] = 'F';

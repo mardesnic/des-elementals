@@ -39,7 +39,12 @@ describe('outcome', () => {
   });
 
   it('lets everyone onto the places and things to hold', () => {
-    for (const tile of ['torch', 'spring', 'brazier', 'wheel'] as const) {
+    for (const tile of [
+      'fireTemple',
+      'waterTemple',
+      'brazier',
+      'wheel',
+    ] as const) {
       expect(outcome('fire', tile, false)).toBe('step');
       expect(outcome('water', tile, false)).toBe('step');
     }
@@ -120,7 +125,7 @@ describe('move', () => {
 });
 
 describe('isWon', () => {
-  it('is won when fire is on the torch and water on the spring', () => {
+  it('is won when fire and water are each in their own temple', () => {
     const { b, s } = setup('Fts', '..W');
     const one = move(b, s, 'fire', 1);
     expect(isWon(one)).toBe(false);
@@ -164,8 +169,8 @@ describe('solvers', () => {
 
   it('count melting as a tap', () => {
     const { b, s } = setup('Fs.iW', '#t###');
-    // Fire walks up to the ice and melts it, then down to the torch; water
-    // swims through to the spring.
+    // Fire walks up to the ice and melts it, then down to its temple; water
+    // swims through to its own.
     expect(tapsToWin(b, s)?.taps).toBe(3);
   });
 

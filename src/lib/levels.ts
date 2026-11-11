@@ -8,6 +8,6 @@ import data from '../levels.json';
 //   .  grass     #  rock      ~  water    i  ice      *  bramble
 //   a  brazier, held by fire to keep the grate A up
 //   b  wheel, turned by water to keep the sluice B up
-//   t  torch, for fire        s  spring, for water
+//   t  fire temple            s  water temple
 //   F  fire     W  water (starting on grass)
 export const LEVELS: Level[] = data;

@@ -26,11 +26,11 @@
   --leaf-dark: #2b8a3e;
   --thorn: #5c940d;
   --berry: #c2255c;
-  --soil: #a1887f;
   --ice-face: #e7f5ff;
   --ice-edge: #74c0fc;
   --glow-fire: #ffe066;
   --glow-water: #a5d8ff;
+  --cloud: #f1f3f5;
   --ring: #ffffff;
   --radius: 18px;
 
@@ -69,11 +69,11 @@
     --leaf: #2f9e44;
     --leaf-dark: #237032;
     --thorn: #94d82d;
-    --soil: #6d5850;
     --ice-face: #d0ebff;
     --ice-edge: #4dabf7;
     --glow-fire: #b8860b;
     --glow-water: #1971c2;
+    --cloud: #ced4da;
     --ring: #e8eaee;
   }
 }
@@ -267,7 +267,7 @@ h2 {
   background: linear-gradient(var(--grass) 0 50%, var(--water) 50% 100%);
 }
 
-/* A torch, spring, brazier or wheel glows while its own element is on it. */
+/* A temple, brazier or wheel glows while its own element is on it. */
 .tile--awake.tile--of-fire {
   background: radial-gradient(var(--glow-fire) 30%, var(--grass) 72%);
 }
@@ -316,11 +316,6 @@ h2 {
 
 .art-stone-dark {
   fill: var(--stone-dark);
-}
-
-.art-stone-gap {
-  stroke: var(--stone-dark);
-  stroke-width: 3;
 }
 
 .art-wave {
@@ -372,36 +367,6 @@ h2 {
 
 .art-iron {
   fill: var(--iron);
-}
-
-.art-smoke {
-  fill: none;
-  stroke: var(--stone);
-  stroke-width: 4;
-  stroke-linecap: round;
-  opacity: 0.7;
-}
-
-.art-soil {
-  fill: var(--soil);
-}
-
-.art-crack {
-  fill: none;
-  stroke: var(--wood-dark);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.art-pool {
-  fill: var(--drop);
-}
-
-.art-ripple {
-  fill: none;
-  stroke: rgb(255 255 255 / 0.7);
-  stroke-width: 3;
 }
 
 .art-leg {
@@ -467,6 +432,60 @@ h2 {
   stroke: var(--wood-dark);
   stroke-width: 8;
   stroke-linecap: round;
+}
+
+.art-column {
+  stroke: var(--stone);
+  stroke-width: 9;
+}
+
+.art-roof-fire {
+  fill: var(--flame);
+}
+
+.art-roof-water {
+  fill: var(--drop);
+}
+
+.art-sign {
+  fill: var(--shine);
+}
+
+.art-sun {
+  fill: var(--flame-core);
+}
+
+.art-rays {
+  stroke: var(--flame);
+  stroke-width: 7;
+  stroke-linecap: round;
+  transform-origin: 50% 50%;
+  animation: turn 12s linear infinite;
+}
+
+.art-cloud {
+  fill: var(--cloud);
+}
+
+.art-rain {
+  stroke: var(--ice-face);
+  stroke-width: 5;
+  stroke-linecap: round;
+  animation: rain 0.9s linear infinite;
+}
+
+@keyframes rain {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(8px);
+    opacity: 0;
+  }
 }
 
 .art-flower {
@@ -568,15 +587,11 @@ h2 {
   background: none;
 }
 
-/* Water keeps a light edge in its full spring. */
-.friend--on-spring .art-drop {
-  stroke: var(--shine);
-  stroke-width: 6;
-}
-
-/* Fire sits on top of its torch as the flame. */
-.friend--on-torch .friend__face {
-  translate: 0 -24%;
+/* In its temple, the sun or cloud floats above the roof. */
+.friend--on-fireTemple .friend__face,
+.friend--on-waterTemple .friend__face {
+  scale: 0.95;
+  translate: 0 -26%;
 }
 
 /* The one that moves next has a ring and bobs gently. */
@@ -703,7 +718,9 @@ h2 {
   .tile,
   .friend__face,
   .art-flower,
-  .art-wheel--turning {
+  .art-wheel--turning,
+  .art-rays,
+  .art-rain {
     animation: none !important;
   }
 }

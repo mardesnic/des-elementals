@@ -155,7 +155,10 @@ export function Board({
               }
               onAnimationEnd={stuck ? onBumpDone : undefined}
             >
-              <Friend element={e} />
+              <Friend
+                element={e}
+                home={isAwake(state, i) && state.tiles[i].endsWith('Temple')}
+              />
             </span>
           </span>
         );

@@ -22,7 +22,7 @@ const Face = ({ y }: { y: number }) => (
   </g>
 );
 
-// A small flame, for a lit torch or a burning brazier.
+// A small flame, for a burning brazier.
 const SmallFlame = ({ x, y, size }: { x: number; y: number; size: number }) => (
   <g transform={`translate(${x - 50 * size} ${y - 94 * size}) scale(${size})`}>
     <path className='art-flame' d={FLAME} />
@@ -30,7 +30,34 @@ const SmallFlame = ({ x, y, size }: { x: number; y: number; size: number }) => (
   </g>
 );
 
-export function Friend({ element }: { element: Element }) {
+// `home` is for one standing in its own temple, where fire becomes the sun
+// and water a rain cloud.
+export function Friend({ element, home }: { element: Element; home: boolean }) {
+  if (home && element === 'fire')
+    return (
+      <Svg>
+        <g className='art-rays'>
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
+            <path key={a} d='M50 4v14' transform={`rotate(${a} 50 50)`} />
+          ))}
+        </g>
+        <circle className='art-sun' cx='50' cy='50' r='27' />
+        <Face y={48} />
+      </Svg>
+    );
+  if (home)
+    return (
+      <Svg>
+        <g className='art-rain'>
+          <path d='M32 74l-3 9M50 78l-3 9M68 74l-3 9' />
+        </g>
+        <path
+          className='art-cloud'
+          d='M24 70a16 16 0 0 1 2-32 24 24 0 0 1 46-6 19 19 0 0 1 4 38z'
+        />
+        <Face y={50} />
+      </Svg>
+    );
   return (
     <Svg>
       {element === 'fire' ? (
@@ -56,7 +83,30 @@ export function Friend({ element }: { element: Element }) {
   );
 }
 
-// `awake` is for a torch, spring, brazier or wheel with its own element
+// A small temple, its roof in its element's colour with its sign on top.
+const Temple = ({ element }: { element: Element }) => (
+  <Svg>
+    <rect
+      className='art-stone-dark'
+      x='8'
+      y='82'
+      width='84'
+      height='12'
+      rx='3'
+    />
+    <rect className='art-stone' x='14' y='74' width='72' height='10' rx='3' />
+    <path className='art-column' d='M27 46v28M50 46v28M73 46v28' />
+    <path
+      className={element === 'fire' ? 'art-roof-fire' : 'art-roof-water'}
+      d='M6 48L50 12l44 36z'
+    />
+    <g transform='translate(41 24) scale(0.18)'>
+      <path className='art-sign' d={element === 'fire' ? FLAME : DROP} />
+    </g>
+  </Svg>
+);
+
+// `awake` is for a temple, brazier or wheel with its own element
 // on it; `open` for a grate or sluice held up.
 export function TileArt({
   tile,
@@ -147,43 +197,10 @@ export function TileArt({
           <circle className='art-berry' cx='60' cy='62' r='5' />
         </Svg>
       );
-    case 'torch':
-      return (
-        <Svg>
-          <rect
-            className='art-wood'
-            x='43'
-            y='44'
-            width='14'
-            height='50'
-            rx='5'
-          />
-          <path className='art-iron' d='M22 30h56l-12 20H34z' />
-          {/* Lit, fire itself is the flame on top. */}
-          {!awake && <path className='art-smoke' d='M50 24q-9-6 0-11t0-11' />}
-        </Svg>
-      );
-    case 'spring':
-      return (
-        <Svg>
-          <circle className='art-stone' cx='50' cy='50' r='40' />
-          <path
-            className='art-stone-gap'
-            d='M50 10v12M50 78v12M10 50h12M78 50h12M22 22l8 8M70 70l8 8M78 22l-8 8M22 78l8-8'
-          />
-          <circle
-            className={awake ? 'art-pool' : 'art-soil'}
-            cx='50'
-            cy='50'
-            r='26'
-          />
-          {awake ? (
-            <ellipse className='art-ripple' cx='50' cy='50' rx='14' ry='8' />
-          ) : (
-            <path className='art-crack' d='M36 46l10 6 4-8 10 8M46 60l6-4' />
-          )}
-        </Svg>
-      );
+    case 'fireTemple':
+      return <Temple element='fire' />;
+    case 'waterTemple':
+      return <Temple element='water' />;
     case 'brazier':
       return (
         <Svg>

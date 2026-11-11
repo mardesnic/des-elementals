@@ -55,11 +55,11 @@ describe('tap', () => {
     expect(tap(game, rock)).toEqual({ steps: [], stuck: 'fire' });
   });
 
-  it('wins when fire is on the torch and water on the spring', () => {
+  it('wins when both are in their own temples', () => {
     let game = first();
     for (const [e, tile] of [
-      ['fire', 'torch'],
-      ['water', 'spring'],
+      ['fire', 'fireTemple'],
+      ['water', 'waterTemple'],
     ] as const) {
       game = { ...game, active: e };
       const { steps } = tap(game, game.state.tiles.indexOf(tile));
@@ -67,7 +67,8 @@ describe('tap', () => {
     }
     const s = game.state;
     expect(game.won).toBe(
-      s.tiles[s.at.fire!] === 'torch' && s.tiles[s.at.water!] === 'spring'
+      s.tiles[s.at.fire!] === 'fireTemple' &&
+        s.tiles[s.at.water!] === 'waterTemple'
     );
   });
 });
