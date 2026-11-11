@@ -55,24 +55,20 @@ describe('tap', () => {
     expect(tap(game, rock)).toEqual({ steps: [], stuck: 'fire' });
   });
 
-  it('wins when both reach the meeting place', () => {
+  it('wins when fire is on the torch and water on the spring', () => {
     let game = first();
-    const hearts = game.state.tiles.flatMap((t, i) =>
-      t === 'goal' ? [i] : []
-    );
-    for (const [e, h] of [
-      ['fire', hearts[0]],
-      ['water', hearts[1]],
+    for (const [e, tile] of [
+      ['fire', 'torch'],
+      ['water', 'spring'],
     ] as const) {
-      const at = game.state.at[e]!;
       game = { ...game, active: e };
-      const { steps } = tap(game, h === at ? hearts[0] : h);
+      const { steps } = tap(game, game.state.tiles.indexOf(tile));
       if (steps.length) game = steps.at(-1)!;
     }
-    const all = Object.values(game.state.at).every(
-      (i) => game.state.tiles[i as number] === 'goal'
+    const s = game.state;
+    expect(game.won).toBe(
+      s.tiles[s.at.fire!] === 'torch' && s.tiles[s.at.water!] === 'spring'
     );
-    expect(game.won).toBe(all);
   });
 });
 
@@ -89,31 +85,31 @@ describe('tap on small boards', () => {
   };
   const fireAt = (steps: Game[]) => steps.map((g) => g.state.at.fire);
 
-  it('walks through a door while the other holds its button', () => {
-    const { go } = play(['Wa#...', 'F.A.hh']);
+  it('walks water through the grate while fire holds the brazier', () => {
+    const { go } = play(['Fa#...', 'W.A..s']);
     expect(go(11)).toMatchObject({ steps: [], stuck: 'fire' });
-    go(0); // pick water
-    go(1); // water onto the button
-    go(6); // pick fire
-    expect(fireAt(go(11).steps)).toEqual([7, 8, 9, 10, 11]);
+    go(1); // fire onto the brazier
+    go(6); // pick water
+    const { steps } = go(11);
+    expect(steps.map((g) => g.state.at.water)).toEqual([7, 8, 9, 10, 11]);
   });
 
   it('walks up to ice far away and melts it', () => {
-    const { go } = play(['F..i.W', 'hh####']);
+    const { go } = play(['F..i.W', 'ts####']);
     const { steps, game } = go(3);
     expect(fireAt(steps)).toEqual([1, 2, 2]);
     expect(game.state.tiles[3]).toBe('water');
   });
 
   it('moves the other one when only it can get there', () => {
-    const { go } = play(['F#.W', 'hh#.']);
+    const { go } = play(['F#.W', 'ts#.']);
     const { steps, game } = go(2);
     expect(steps.map((g) => g.state.at.water)).toEqual([2]);
     expect(game.active).toBe('water');
   });
 
   it('stops a walk on the win', () => {
-    const { go } = play(['Fh..', '.hW.']);
+    const { go } = play(['Ft..', '.sW.']);
     go(6);
     go(5);
     go(0);

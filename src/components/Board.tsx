@@ -2,26 +2,21 @@ import { useRef, type CSSProperties } from 'react';
 
 import {
   boardOf,
-  doorColour,
   elementsIn,
+  isAwake,
+  isGate,
+  ownerOf,
   shownOpen,
   type Element,
   type Level,
   type State,
-  type Tile,
 } from '../lib/elementals';
 import type { Strings } from '../lib/i18n';
+import { Flower, Friend, TileArt } from './Art';
 
-const FACES: Record<Element, string> = { fire: '🔥', water: '💧' };
-
-// Things drawn on a tile. Water, grass, the button and the door are
-// drawn with colour only, so nothing looks like fire or water.
-const ON_TILE: Partial<Record<Tile, string>> = {
-  rock: '🪨',
-  ice: '🧊',
-  bramble: '🌵',
-  goal: '❤️',
-};
+// Whether a flower grows on grass square i once the level is won: about
+// half of them, the same ones every time.
+const blooms = (i: number) => (i * 7 + 3) % 11 < 6;
 
 // A drag shorter than this is a tap.
 const SWIPE = 24;
@@ -100,27 +95,30 @@ export function Board({
         onPointerCancel={() => (down.current = null)}
       >
         {state.tiles.map((tile, i) => {
-          const isOpen = shownOpen(state, i);
-          const colour = doorColour(tile) ?? tile.match(/^button(.)$/)?.[1];
+          const open = isGate(tile) && shownOpen(state, i);
+          const awake = isAwake(state, i);
+          const owner = ownerOf(tile);
+          const said = awake
+            ? t.awake[tile as keyof Strings['awake']]
+            : open && t.open;
           return (
             <span
               // A tile that changes is drawn anew, so it pops in.
               key={`${i}-${tile}`}
               className={[
                 'tile',
-                `tile--${tile.replace(/[AB]$/, '')}`,
-                colour && `tile--${colour}`,
-                isOpen && 'tile--open',
+                `tile--${tile}`,
+                owner && `tile--of-${owner}`,
+                awake && 'tile--awake',
                 reach.has(i) && 'tile--reach',
               ]
                 .filter(Boolean)
                 .join(' ')}
               role='img'
-              aria-label={
-                isOpen ? `${t.tiles[tile]}, ${t.open}` : t.tiles[tile]
-              }
+              aria-label={said ? `${t.tiles[tile]}, ${said}` : t.tiles[tile]}
             >
-              {ON_TILE[tile]}
+              <TileArt tile={tile} awake={awake} open={open} i={i} />
+              {won && tile === 'grass' && blooms(i) && <Flower i={i} />}
             </span>
           );
         })}
@@ -132,7 +130,14 @@ export function Board({
         return (
           <span
             key={e}
-            className={`friend${e === active && !won ? ' friend--active' : ''}`}
+            className={[
+              'friend',
+              e === active && !won && 'friend--active',
+              // Smaller on its own place, so the glow shows around it.
+              isAwake(state, i) && `friend--home friend--on-${state.tiles[i]}`,
+            ]
+              .filter(Boolean)
+              .join(' ')}
             style={
               {
                 '--x': i % b.width,
@@ -150,7 +155,7 @@ export function Board({
               }
               onAnimationEnd={stuck ? onBumpDone : undefined}
             >
-              {FACES[e]}
+              <Friend element={e} />
             </span>
           </span>
         );

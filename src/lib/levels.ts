@@ -6,6 +6,8 @@ import data from '../levels.json';
 // progress keeps pointing at the same level.
 //
 //   .  grass     #  rock      ~  water    i  ice      *  bramble
-//   a  button and A its door, b  button and B its door
-//   h  meeting place          F  fire     W  water (starting on grass)
+//   a  brazier, held by fire to keep the grate A up
+//   b  wheel, turned by water to keep the sluice B up
+//   t  torch, for fire        s  spring, for water
+//   F  fire     W  water (starting on grass)
 export const LEVELS: Level[] = data;

@@ -7,11 +7,14 @@ const ROCK = 1;
 const WATER = 2;
 const ICE = 3;
 const BRAMBLE = 4;
-const BUTTON_A = 5;
-const DOOR_A = 6;
-const BUTTON_B = 7;
-const DOOR_B = 8;
-const GOAL = 9;
+// Fire holds the brazier to keep the grate up; water the wheel for the
+// sluice. Fire wins on the torch, water on the spring.
+const BRAZIER = 5;
+const GRATE = 6;
+const WHEEL = 7;
+const SLUICE = 8;
+const TORCH = 9;
+const SPRING = 10;
 
 const CODES: Record<string, number> = {
   '.': GRASS,
@@ -21,11 +24,12 @@ const CODES: Record<string, number> = {
   '~': WATER,
   i: ICE,
   '*': BRAMBLE,
-  a: BUTTON_A,
-  A: DOOR_A,
-  b: BUTTON_B,
-  B: DOOR_B,
-  h: GOAL,
+  a: BRAZIER,
+  A: GRATE,
+  b: WHEEL,
+  B: SLUICE,
+  t: TORCH,
+  s: SPRING,
 };
 
 type Board = {
@@ -75,19 +79,21 @@ function tileAt(b: Board, i: number, mask: number) {
 }
 
 // Whether element e (0 fire, 1 water) can step onto square i while the
-// other one stands on `other`.
+// other one stands on `other`. Only fire can hold the brazier, so only
+// water ever goes through the grate, and the other way round.
 function canStep(b: Board, e: number, i: number, mask: number, other: number) {
   if (i === other) return false;
   switch (tileAt(b, i, mask)) {
     case GRASS:
-    case GOAL:
-    case BUTTON_A:
-    case BUTTON_B:
+    case TORCH:
+    case SPRING:
+    case BRAZIER:
+    case WHEEL:
       return true;
-    case DOOR_A:
-      return b.tiles[other] === BUTTON_A;
-    case DOOR_B:
-      return b.tiles[other] === BUTTON_B;
+    case GRATE:
+      return e === 1 && b.tiles[other] === BRAZIER;
+    case SLUICE:
+      return e === 0 && b.tiles[other] === WHEEL;
     case WATER:
       return e === 1;
     default:
@@ -106,7 +112,7 @@ const index = (b: Board, mask: number, p0: number, p1: number) =>
   (mask * b.n + p0) * b.n + p1;
 
 const won = (b: Board, p0: number, p1: number) =>
-  b.tiles[p0] === GOAL && b.tiles[p1] === GOAL;
+  b.tiles[p0] === TORCH && b.tiles[p1] === SPRING;
 
 // Calls `visit` with every state one step away.
 function successors(

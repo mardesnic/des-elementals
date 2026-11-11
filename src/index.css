@@ -12,10 +12,25 @@
   --water: #4dabf7;
   --water-deep: #339af0;
   --ice: #d0ebff;
-  --bramble: #94d82d;
-  --colour-A: #f08c00;
-  --colour-B: #7950f2;
-  --goal: #ffd8e4;
+  --flame: #ff922b;
+  --flame-core: #ffd43b;
+  --drop: #339af0;
+  --shine: #ffffff;
+  --face: #1a1d23;
+  --stone: #adb5bd;
+  --stone-dark: #868e96;
+  --iron: #495057;
+  --wood: #b07a45;
+  --wood-dark: #8a5a2b;
+  --leaf: #37b24d;
+  --leaf-dark: #2b8a3e;
+  --thorn: #5c940d;
+  --berry: #c2255c;
+  --soil: #a1887f;
+  --ice-face: #e7f5ff;
+  --ice-edge: #74c0fc;
+  --glow-fire: #ffe066;
+  --glow-water: #a5d8ff;
   --ring: #ffffff;
   --radius: 18px;
 
@@ -46,10 +61,19 @@
     --water: #1c6fb5;
     --water-deep: #185f9c;
     --ice: #a5d8ff;
-    --bramble: #5c940d;
-    --colour-A: #f59f00;
-    --colour-B: #9775fa;
-    --goal: #5c2b3d;
+    --stone: #868e96;
+    --stone-dark: #5c636a;
+    --iron: #5c636a;
+    --wood: #9c6b3c;
+    --wood-dark: #74481f;
+    --leaf: #2f9e44;
+    --leaf-dark: #237032;
+    --thorn: #94d82d;
+    --soil: #6d5850;
+    --ice-face: #d0ebff;
+    --ice-edge: #4dabf7;
+    --glow-fire: #b8860b;
+    --glow-water: #1971c2;
     --ring: #e8eaee;
   }
 }
@@ -208,13 +232,20 @@ h2 {
   place-items: center;
   border-radius: calc(var(--unit) * 0.14);
   background: var(--grass);
-  font-size: calc(var(--unit) * 0.58);
-  line-height: 1;
   animation: appear 0.35s ease-out;
 }
 
-.tile--rock {
-  background: var(--rock);
+/* Every picture fills its square; a tile's pictures sit on top of each
+   other. */
+.tile > *,
+.friend__face > * {
+  grid-area: 1 / 1;
+}
+
+.art {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
 .tile--water {
@@ -228,51 +259,257 @@ h2 {
 }
 
 .tile--ice {
-  background: var(--ice);
+  background: var(--water);
 }
 
-.tile--bramble {
-  background: var(--bramble);
+/* The wheel stands in a stream. */
+.tile--wheel {
+  background: linear-gradient(var(--grass) 0 50%, var(--water) 50% 100%);
 }
 
-.tile--goal {
-  background: var(--goal);
+/* A torch, spring, brazier or wheel glows while its own element is on it. */
+.tile--awake.tile--of-fire {
+  background: radial-gradient(var(--glow-fire) 30%, var(--grass) 72%);
 }
 
-/* Buttons and doors come in two colours; a button opens its own colour. */
-.tile--A {
-  --colour: var(--colour-A);
+.tile--awake.tile--of-water {
+  background: radial-gradient(var(--glow-water) 30%, var(--grass) 72%);
 }
 
-.tile--B {
-  --colour: var(--colour-B);
+.art-face {
+  fill: var(--face);
+  stroke: var(--face);
+  stroke-linecap: round;
 }
 
-/* A button is a round pad. */
-.tile--button::after {
-  content: '';
-  width: 58%;
-  height: 58%;
-  border-radius: 50%;
-  background: var(--colour);
-  box-shadow:
-    inset 0 -4px 0 rgb(0 0 0 / 0.2),
-    0 0 0 3px color-mix(in srgb, var(--colour) 40%, transparent);
+.art-face circle {
+  stroke: none;
 }
 
-/* A closed door is planks in its colour; an open one is just its frame. */
-.tile--door {
-  background: repeating-linear-gradient(
-    90deg,
-    var(--colour) 0 22%,
-    color-mix(in srgb, var(--colour) 70%, black) 22% 26%
-  );
-  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--colour) 60%, black);
+.art-flame {
+  fill: var(--flame);
 }
 
-.tile--open {
-  background: var(--grass);
-  box-shadow: inset 0 0 0 3px var(--colour);
+.art-flame-core {
+  fill: var(--flame-core);
+}
+
+.art-drop {
+  fill: var(--drop);
+}
+
+.art-shine {
+  fill: rgb(255 255 255 / 0.45);
+  stroke: rgb(255 255 255 / 0.7);
+}
+
+.art-tuft {
+  fill: none;
+  stroke: var(--grass-edge);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.art-stone {
+  fill: var(--stone);
+}
+
+.art-stone-dark {
+  fill: var(--stone-dark);
+}
+
+.art-stone-gap {
+  stroke: var(--stone-dark);
+  stroke-width: 3;
+}
+
+.art-wave {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.5);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.art-ice {
+  fill: var(--ice-face);
+  stroke: var(--ice-edge);
+  stroke-width: 5;
+}
+
+.art-ice-line {
+  stroke: var(--ice-edge);
+  stroke-width: 3;
+  opacity: 0.6;
+}
+
+.art-shine-line {
+  stroke: var(--shine);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.art-thorn {
+  stroke: var(--thorn);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.art-leaf {
+  fill: var(--leaf);
+}
+
+.art-leaf-dark {
+  fill: var(--leaf-dark);
+}
+
+.art-berry {
+  fill: var(--berry);
+}
+
+.art-wood {
+  fill: var(--wood);
+}
+
+.art-iron {
+  fill: var(--iron);
+}
+
+.art-smoke {
+  fill: none;
+  stroke: var(--stone);
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+
+.art-soil {
+  fill: var(--soil);
+}
+
+.art-crack {
+  fill: none;
+  stroke: var(--wood-dark);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.art-pool {
+  fill: var(--drop);
+}
+
+.art-ripple {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.7);
+  stroke-width: 3;
+}
+
+.art-leg {
+  stroke: var(--iron);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.art-coal {
+  fill: var(--stone-dark);
+}
+
+.art-coal--hot {
+  fill: #e8590c;
+}
+
+.art-wheel {
+  transform-origin: 50% 50%;
+}
+
+.art-wheel--turning {
+  animation: turn 3s linear infinite;
+}
+
+.art-paddle {
+  fill: var(--drop);
+}
+
+.art-rim {
+  fill: none;
+  stroke: var(--wood);
+  stroke-width: 8;
+}
+
+.art-spoke {
+  stroke: var(--wood-dark);
+  stroke-width: 6;
+}
+
+/* The grate and sluice: fire's has an orange beam, water's a blue one,
+   to match what holds them up. */
+.art-bar {
+  stroke: var(--iron);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.art-beam-fire {
+  fill: var(--flame);
+}
+
+.art-beam-water {
+  fill: var(--drop);
+}
+
+.art-plank {
+  fill: var(--wood);
+  stroke: var(--wood-dark);
+  stroke-width: 3;
+}
+
+.art-post {
+  stroke: var(--wood-dark);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.art-flower {
+  animation: grow 0.5s ease-out backwards;
+}
+
+.art-stem {
+  stroke: var(--leaf-dark);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.art-petals--a {
+  fill: #f783ac;
+}
+
+.art-petals--b {
+  fill: #ffd43b;
+}
+
+.art-petals--c {
+  fill: #ffffff;
+}
+
+.art-petals--d {
+  fill: #b197fc;
+}
+
+.art-flower-heart {
+  fill: #f59f00;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
 }
 
 /* Where the picked one can walk: a soft dot. */
@@ -318,11 +555,28 @@ h2 {
   place-items: center;
   width: 86%;
   height: 86%;
+  padding: 8%;
   border-radius: 50%;
   /* A light disc keeps water visible on water. */
   background: color-mix(in srgb, var(--ring) 60%, transparent);
-  font-size: calc(var(--unit) * 0.6);
-  line-height: 1;
+  transition: scale 0.2s;
+}
+
+/* On its own place it shrinks a little, so the glow shows around it. */
+.friend--home .friend__face {
+  scale: 0.72;
+  background: none;
+}
+
+/* Water keeps a light edge in its full spring. */
+.friend--on-spring .art-drop {
+  stroke: var(--shine);
+  stroke-width: 6;
+}
+
+/* Fire sits on top of its torch as the flame. */
+.friend--on-torch .friend__face {
+  translate: 0 -24%;
 }
 
 /* The one that moves next has a ring and bobs gently. */
@@ -335,7 +589,8 @@ h2 {
   animation: shake 0.35s ease-in-out !important;
 }
 
-.board--won .friend__face {
+.board--won .friend__face,
+.board--won .friend--active .friend__face {
   animation: hop 0.5s ease-in-out 3;
 }
 
@@ -446,7 +701,9 @@ h2 {
 @media (prefers-reduced-motion: reduce) {
   .solved,
   .tile,
-  .friend__face {
+  .friend__face,
+  .art-flower,
+  .art-wheel--turning {
     animation: none !important;
   }
 }

@@ -67,11 +67,20 @@ describe('levels', () => {
     for (const row of level.rows) expect(row).toHaveLength(width);
   });
 
-  it.each(LEVELS)('$id has fire, water and a heart of two', (level) => {
+  it.each(LEVELS)('$id has fire, water, a torch and a spring', (level) => {
     const s = parse(level);
     expect(elementsIn(s)).toEqual(['fire', 'water']);
-    expect(s.tiles.filter((t) => t === 'goal')).toHaveLength(2);
+    expect(s.tiles.filter((t) => t === 'torch')).toHaveLength(1);
+    expect(s.tiles.filter((t) => t === 'spring')).toHaveLength(1);
     expect(isWon(s)).toBe(false);
+  });
+
+  it('bring in the brazier and the wheel each on its own first', () => {
+    const first = (ch: string) =>
+      LEVELS.findIndex((l) => l.rows.join('').includes(ch));
+    const kinds = (n: number) =>
+      new Set(LEVELS[n].rows.join('').replace(/[.#FWts]/g, ''));
+    for (const ch of 'ab') expect(kinds(first(ch)).size).toBe(2);
   });
 
   it.each(LEVELS)('$id can be won', (level) => {

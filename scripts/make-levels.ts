@@ -4,7 +4,7 @@
 //   npm run levels
 //
 // A board is kept when it can be won and when turning any ice, bramble,
-// button or door into rock (or all the water, if it has some) makes it
+// brazier, wheel, grate or sluice into rock (or all the water, if it has some) makes it
 // impossible. So nothing is there just for show, and no shortcut skips it.
 // It must also have no dead ends: no move, such as one friend shutting the
 // other in, can leave it unwinnable.
@@ -14,7 +14,7 @@ import { writeFileSync } from 'node:fs';
 import type { Level } from '../src/lib/elementals.ts';
 import { noDeadEnds, solvable, taps as tapsToWin } from './solver.ts';
 
-type Kind = 'water' | 'bramble' | 'ice' | 'doorA' | 'doorB';
+type Kind = 'water' | 'bramble' | 'ice' | 'grate' | 'sluice';
 
 type Slot = {
   size: [number, number];
@@ -24,61 +24,68 @@ type Slot = {
   switches: number;
 };
 
-// Easiest first: one new thing at a time, then mixed.
+// Easiest first: one new thing at a time, then mixed. Water with ice
+// never made a good board, so those mixes are left out.
 const SLOTS: Slot[] = [
   { size: [5, 5], kinds: [], taps: [2, 2], switches: 1 },
   { size: [5, 5], kinds: ['water'], taps: [2, 3], switches: 1 },
   { size: [5, 5], kinds: ['bramble'], taps: [3, 4], switches: 1 },
   { size: [5, 5], kinds: ['ice'], taps: [3, 4], switches: 1 },
-  { size: [5, 5], kinds: ['doorA'], taps: [3, 4], switches: 1 },
+  { size: [5, 5], kinds: ['grate'], taps: [3, 4], switches: 1 },
+  { size: [5, 5], kinds: ['sluice'], taps: [3, 4], switches: 1 },
   { size: [5, 5], kinds: ['water', 'bramble'], taps: [3, 5], switches: 1 },
-  { size: [6, 6], kinds: ['ice', 'doorA'], taps: [4, 6], switches: 2 },
-  { size: [6, 6], kinds: ['bramble', 'doorA'], taps: [4, 6], switches: 2 },
-  { size: [6, 6], kinds: ['doorA', 'doorB'], taps: [4, 7], switches: 2 },
+  { size: [6, 6], kinds: ['ice', 'grate'], taps: [4, 6], switches: 2 },
+  { size: [6, 6], kinds: ['bramble', 'sluice'], taps: [4, 6], switches: 2 },
+  { size: [6, 6], kinds: ['grate', 'sluice'], taps: [4, 7], switches: 2 },
   { size: [6, 6], kinds: ['ice', 'bramble'], taps: [4, 7], switches: 2 },
-  { size: [6, 6], kinds: ['water', 'doorA'], taps: [5, 7], switches: 2 },
+  { size: [6, 6], kinds: ['water', 'grate'], taps: [5, 7], switches: 2 },
   {
     size: [6, 6],
-    kinds: ['ice', 'bramble', 'doorA'],
+    kinds: ['ice', 'bramble', 'sluice'],
     taps: [5, 8],
     switches: 3,
   },
   {
     size: [6, 6],
-    kinds: ['water', 'doorA', 'doorB'],
+    kinds: ['water', 'grate', 'sluice'],
     taps: [5, 8],
     switches: 3,
   },
-  { size: [6, 6], kinds: ['ice', 'doorA', 'doorB'], taps: [5, 8], switches: 3 },
+  {
+    size: [6, 6],
+    kinds: ['ice', 'grate', 'sluice'],
+    taps: [5, 8],
+    switches: 3,
+  },
   {
     size: [7, 7],
-    kinds: ['bramble', 'doorA', 'doorB'],
+    kinds: ['bramble', 'grate', 'sluice'],
     taps: [6, 9],
     switches: 3,
   },
-  { size: [7, 7], kinds: ['water', 'ice', 'doorA'], taps: [6, 9], switches: 3 },
   {
     size: [7, 7],
-    kinds: ['ice', 'bramble', 'doorA', 'doorB'],
+    kinds: ['ice', 'bramble', 'grate', 'sluice'],
     taps: [6, 10],
     switches: 4,
   },
   {
     size: [7, 7],
-    kinds: ['water', 'bramble', 'doorA', 'doorB'],
+    kinds: ['water', 'bramble', 'grate', 'sluice'],
     taps: [6, 10],
     switches: 4,
   },
+  { size: [6, 6], kinds: ['water', 'sluice'], taps: [5, 8], switches: 3 },
   {
-    size: [7, 7],
-    kinds: ['water', 'ice', 'doorA', 'doorB'],
-    taps: [7, 11],
-    switches: 4,
+    size: [6, 6],
+    kinds: ['water', 'bramble', 'sluice'],
+    taps: [5, 8],
+    switches: 3,
   },
   {
     size: [7, 7],
-    kinds: ['water', 'ice', 'bramble', 'doorA'],
-    taps: [7, 11],
+    kinds: ['ice', 'bramble', 'sluice'],
+    taps: [6, 10],
     switches: 4,
   },
 ];
@@ -131,24 +138,16 @@ function randomBoard(slot: Slot, rnd: () => number): string[] {
       for (let k = several(2); k > 0; k--) cells[free()] = '*';
     if (kind === 'ice')
       for (let k = several(2); k > 0; k--) cells[free()] = 'i';
-    if (kind === 'doorA' || kind === 'doorB') {
-      const [button, door] = kind === 'doorA' ? ['a', 'A'] : ['b', 'B'];
-      cells[free()] = door;
-      cells[free()] = button;
+    if (kind === 'grate' || kind === 'sluice') {
+      const [holder, gate] = kind === 'grate' ? ['a', 'A'] : ['b', 'B'];
+      cells[free()] = gate;
+      cells[free()] = holder;
     }
   }
 
-  // The meeting place: two squares side by side.
-  for (let t = 0; ; t++) {
-    if (t > 200) throw new Full();
-    const i = free();
-    const sideways = rnd() < 0.5;
-    const j = sideways ? i + 1 : i + w;
-    if (sideways ? i % w === w - 1 : j >= w * h) continue;
-    if (cells[j] !== '.') continue;
-    cells[i] = cells[j] = 'h';
-    break;
-  }
+  // The torch for fire and the spring for water.
+  cells[free()] = 't';
+  cells[free()] = 's';
   cells[free()] = 'F';
   cells[free()] = 'W';
 
@@ -193,15 +192,15 @@ const hasAll = (rows: string[], slot: Slot) => {
     water: '~',
     bramble: '*',
     ice: 'i',
-    doorA: 'A',
-    doorB: 'B',
+    grate: 'A',
+    sluice: 'B',
   };
   return slot.kinds.every((k) => flat.includes(letter[k]));
 };
 
 // The first few levels each bring in one new thing; after them, levels
 // go from fewest taps to most.
-const INTRO = 6;
+const INTRO = 7;
 const levels: (Level & { taps: number })[] = [];
 const used = new Set<string>();
 const rnd = mulberry32(20261111);

@@ -1,5 +1,6 @@
 // The rules: a few element friends on a small board of tiles, who win when
-// every one of them stands on the meeting place.
+// each of them wakes its own place: fire lights the torch, water fills the
+// spring.
 
 export const ELEMENTS = ['fire', 'water'] as const;
 export type Element = (typeof ELEMENTS)[number];
@@ -11,20 +12,27 @@ export const TILES = {
   '~': 'water',
   i: 'ice',
   '*': 'bramble',
-  a: 'buttonA',
-  A: 'doorA',
-  b: 'buttonB',
-  B: 'doorB',
-  h: 'goal',
+  a: 'brazier',
+  A: 'grate',
+  b: 'wheel',
+  B: 'sluice',
+  t: 'torch',
+  s: 'spring',
 } as const;
 export type Tile = (typeof TILES)[keyof typeof TILES];
 
-// Buttons open the doors of their own colour.
-export type Colour = 'A' | 'B';
-const BUTTON: Partial<Record<Tile, Colour>> = { buttonA: 'A', buttonB: 'B' };
-const DOOR: Partial<Record<Tile, Colour>> = { doorA: 'A', doorB: 'B' };
-export const doorColour = (t: Tile) => DOOR[t];
-export const buttonColour = (t: Tile) => BUTTON[t];
+// Each element has its own place to wake, and its own thing to hold that
+// opens a way for the other: fire keeps the brazier burning and the grate
+// stays up; water turns the wheel and the sluice stays up.
+const HOME: Partial<Record<Tile, Element>> = { torch: 'fire', spring: 'water' };
+const HOLDER: Partial<Record<Tile, Element>> = {
+  brazier: 'fire',
+  wheel: 'water',
+};
+const GATE: Partial<Record<Tile, Element>> = { grate: 'fire', sluice: 'water' };
+// Whose place or thing a tile is, if anyone's.
+export const ownerOf = (t: Tile) => HOME[t] ?? HOLDER[t] ?? GATE[t];
+export const isGate = (t: Tile) => GATE[t] !== undefined;
 
 // Where each element starts, written on grass.
 const STARTS: Record<string, Element> = { F: 'fire', W: 'water' };
@@ -83,37 +91,43 @@ export function neighbours({ width, height }: Board, i: number): number[] {
 export const isNextTo = (b: Board, a: number, c: number) =>
   neighbours(b, a).includes(c);
 
-// Doors of a colour are open while anyone stands on a button of that
-// colour. `besides` is left out, as the one moving can't hold a button and
-// walk through at once.
-export function isOpen(s: State, colour: Colour, besides?: Element): boolean {
-  return elementsIn(s).some(
-    (e) => e !== besides && BUTTON[s.tiles[s.at[e]!]] === colour
-  );
+// Whether `e` stands on its own thing to hold, so its gates are up.
+// `besides` is left out, as the one moving can't hold and walk at once.
+export function isHeld(s: State, e: Element, besides?: Element): boolean {
+  const at = s.at[e];
+  return e !== besides && at !== undefined && HOLDER[s.tiles[at]] === e;
 }
 
-// Whether the door on square i shows open: its button is held, or someone
-// stands in the doorway.
+// Whether square i is woken: a torch, spring, brazier or wheel with its own
+// element on it. Anyone else can stand there, but nothing happens.
+export function isAwake(s: State, i: number): boolean {
+  const owner = HOME[s.tiles[i]] ?? HOLDER[s.tiles[i]];
+  return owner !== undefined && s.at[owner] === i;
+}
+
+// Whether the gate on square i shows open: it is held up, or someone
+// stands in it.
 export function shownOpen(s: State, i: number): boolean {
-  const colour = DOOR[s.tiles[i]];
-  if (!colour) return false;
-  return isOpen(s, colour) || elementsIn(s).some((e) => s.at[e] === i);
+  const by = GATE[s.tiles[i]];
+  if (!by) return false;
+  return isHeld(s, by) || elementsIn(s).some((e) => s.at[e] === i);
 }
 
 // What happens when an element moves onto a tile: it steps on, can't go,
 // or changes the tile and stays where it is.
 export type Outcome = 'step' | 'blocked' | { becomes: Tile };
 
-// `open` says whether the tile, if it is a door, is open.
+// `open` says whether the tile, if it is a gate, is held up.
 export function outcome(e: Element, tile: Tile, open: boolean): Outcome {
   switch (tile) {
     case 'grass':
-    case 'goal':
-    case 'buttonA':
-    case 'buttonB':
+    case 'torch':
+    case 'spring':
+    case 'brazier':
+    case 'wheel':
       return 'step';
-    case 'doorA':
-    case 'doorB':
+    case 'grate':
+    case 'sluice':
       return open ? 'step' : 'blocked';
     case 'rock':
       return 'blocked';
@@ -131,8 +145,8 @@ export function outcome(e: Element, tile: Tile, open: boolean): Outcome {
 export function outcomeAt(s: State, e: Element, to: number): Outcome {
   if (elementsIn(s).some((o) => s.at[o] === to)) return 'blocked';
   const tile = s.tiles[to];
-  const colour = DOOR[tile];
-  return outcome(e, tile, colour ? isOpen(s, colour, e) : false);
+  const by = GATE[tile];
+  return outcome(e, tile, by ? isHeld(s, by, e) : false);
 }
 
 // The state after `e` tries to move to square `to`, or the same state if
@@ -148,11 +162,11 @@ export function move(b: Board, s: State, e: Element, to: number): State {
   return { ...s, tiles };
 }
 
-// Everyone is on the meeting place.
+// Everyone is on their own place at once.
 export function isWon(s: State): boolean {
   const everyone = elementsIn(s);
   return (
-    everyone.length > 0 && everyone.every((e) => s.tiles[s.at[e]!] === 'goal')
+    everyone.length > 0 && everyone.every((e) => HOME[s.tiles[s.at[e]!]] === e)
   );
 }
 

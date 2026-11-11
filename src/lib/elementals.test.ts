@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   boardOf,
-  isOpen,
+  isAwake,
+  isHeld,
   isWon,
   move,
   movesToWin,
@@ -32,14 +33,16 @@ describe('outcome', () => {
     expect(outcome('water', 'bramble', false)).toBe('blocked');
   });
 
-  it('opens doors only while their button is held', () => {
-    expect(outcome('fire', 'doorA', true)).toBe('step');
-    expect(outcome('fire', 'doorB', false)).toBe('blocked');
+  it('lets through gates only while they are held up', () => {
+    expect(outcome('water', 'grate', true)).toBe('step');
+    expect(outcome('fire', 'sluice', false)).toBe('blocked');
   });
 
-  it('lets everyone onto the meeting place', () => {
-    expect(outcome('fire', 'goal', false)).toBe('step');
-    expect(outcome('water', 'goal', false)).toBe('step');
+  it('lets everyone onto the places and things to hold', () => {
+    for (const tile of ['torch', 'spring', 'brazier', 'wheel'] as const) {
+      expect(outcome('fire', tile, false)).toBe('step');
+      expect(outcome('water', tile, false)).toBe('step');
+    }
   });
 });
 
@@ -73,40 +76,66 @@ describe('move', () => {
     expect(s.tiles[1]).toBe('ice');
   });
 
-  it('opens only the doors of the colour held', () => {
-    const { b, s } = setup('FAB', '#..', 'Wab');
+  it('raises the grate while fire holds the brazier', () => {
+    const { b, s } = setup('WA.', '#..', 'Fa.');
+    expect(move(b, s, 'water', 1)).toBe(s);
+    const held = move(b, s, 'fire', 7);
+    expect(isHeld(held, 'fire')).toBe(true);
+    expect(shownOpen(held, 1)).toBe(true);
+    expect(move(b, held, 'water', 1).at.water).toBe(1);
+  });
+
+  it('raises the sluice while water turns the wheel', () => {
+    const { b, s } = setup('FB.', '#..', 'Wb.');
     expect(move(b, s, 'fire', 1)).toBe(s);
     const held = move(b, s, 'water', 7);
-    expect(isOpen(held, 'A')).toBe(true);
-    expect(isOpen(held, 'B')).toBe(false);
     expect(move(b, held, 'fire', 1).at.fire).toBe(1);
   });
 
-  it('does not let the one on the button walk into its door', () => {
-    const { b, s } = setup('aA.', 'F#W');
-    const onButton = move(b, s, 'fire', 0);
-    expect(move(b, onButton, 'fire', 1)).toBe(onButton);
+  it('does nothing when the wrong one holds', () => {
+    const { b, s } = setup('WA.', '#..', 'Fb.', 'a..');
+    const wrong = move(b, move(b, s, 'fire', 7), 'water', 1);
+    expect(isHeld(wrong, 'fire')).toBe(false);
+    expect(isAwake(wrong, 7)).toBe(false);
+    expect(shownOpen(wrong, 1)).toBe(false);
+    expect(wrong.at.water).toBe(0);
   });
 
-  it('lets someone in the doorway leave after the button is let go', () => {
-    const { b, s } = setup('FA..', '##a#', '##W#');
-    let next = move(b, s, 'water', 6);
-    next = move(b, next, 'fire', 1);
-    next = move(b, next, 'water', 10);
-    expect(isOpen(next, 'A')).toBe(false);
+  it('does not let fire walk through the grate it holds up', () => {
+    const { b, s } = setup('aA.', 'F#W');
+    const holding = move(b, s, 'fire', 0);
+    expect(move(b, holding, 'fire', 1)).toBe(holding);
+  });
+
+  it('lets someone in a gate leave after it is let go', () => {
+    const { b, s } = setup('WA..', '##a#', '##F#');
+    let next = move(b, s, 'fire', 6);
+    next = move(b, next, 'water', 1);
+    next = move(b, next, 'fire', 10);
+    expect(isHeld(next, 'fire')).toBe(false);
     expect(shownOpen(next, 1)).toBe(true);
-    expect(move(b, next, 'fire', 2).at.fire).toBe(2);
-    expect(move(b, next, 'fire', 0).at.fire).toBe(0);
+    expect(move(b, next, 'water', 2).at.water).toBe(2);
+    expect(move(b, next, 'water', 0).at.water).toBe(0);
   });
 });
 
 describe('isWon', () => {
-  it('is won when everyone is on the meeting place', () => {
-    expect(isWon(setup('Fhh', '..W').s)).toBe(false);
-    const { b, s } = setup('Fhh', '..W');
+  it('is won when fire is on the torch and water on the spring', () => {
+    const { b, s } = setup('Fts', '..W');
     const one = move(b, s, 'fire', 1);
     expect(isWon(one)).toBe(false);
-    expect(isWon(move(b, one, 'water', 2))).toBe(true);
+    expect(isAwake(one, 1)).toBe(true);
+    const both = move(b, one, 'water', 2);
+    expect(isAwake(both, 2)).toBe(true);
+    expect(isWon(both)).toBe(true);
+  });
+
+  it('is not won the other way round', () => {
+    const { b, s } = setup('Fst', '..W');
+    const swapped = move(b, move(b, s, 'fire', 1), 'water', 2);
+    expect(swapped.at).toEqual({ fire: 1, water: 2 });
+    expect(isAwake(swapped, 1)).toBe(false);
+    expect(isWon(swapped)).toBe(false);
   });
 });
 
@@ -123,25 +152,25 @@ describe('walks', () => {
 
 describe('solvers', () => {
   it('count single steps', () => {
-    const { b, s } = setup('F.hhW');
+    const { b, s } = setup('F.tsW');
     expect(movesToWin(b, s)).toBe(3);
     expect(movesToWin(b, s, ['fire'])).toBe(-1);
   });
 
   it('count taps, a whole walk being one', () => {
-    const { b, s } = setup('F....', '.....', '..hh.', '.....', '....W');
+    const { b, s } = setup('F....', '.....', '..ts.', '.....', '....W');
     expect(tapsToWin(b, s)?.taps).toBe(2);
   });
 
   it('count melting as a tap', () => {
-    const { b, s } = setup('Fh.iW', '#h###');
-    // Fire walks up to the ice and melts it, then walks down to the heart;
-    // water swims through to the other half.
+    const { b, s } = setup('Fs.iW', '#t###');
+    // Fire walks up to the ice and melts it, then down to the torch; water
+    // swims through to the spring.
     expect(tapsToWin(b, s)?.taps).toBe(3);
   });
 
   it('say when it cannot be won', () => {
-    const { b, s } = setup('F#hhW');
+    const { b, s } = setup('F#tsW');
     expect(movesToWin(b, s)).toBe(-1);
     expect(tapsToWin(b, s)).toBeUndefined();
   });
