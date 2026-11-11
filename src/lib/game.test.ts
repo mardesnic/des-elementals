@@ -13,9 +13,10 @@ import {
   tap,
   type Game,
 } from './game';
-import { LEVELS } from './levels';
+import { LEVELS, worldOf } from './levels';
 
-const first = () => newGame(LEVELS[0]);
+// The first level with both fire and water.
+const first = () => newGame(LEVELS.find((l) => worldOf(l) === 'fireWater')!);
 const board = (g: Game) => boardOf(levelById(g.level)!);
 
 // A square far from everyone, that the active one can't walk to.
@@ -70,6 +71,18 @@ describe('tap', () => {
       s.tiles[s.at.fire!] === 'fireTemple' &&
         s.tiles[s.at.water!] === 'waterTemple'
     );
+  });
+
+  it('wins when fire alone is in its temple', () => {
+    const level = { id: 'alone', rows: ['F.#', '.*t'] };
+    const game = newGame(level);
+    expect(game.active).toBe('fire');
+    // The bush is in the way: tapping the temple only shakes fire.
+    expect(tap(game, 5, level).stuck).toBe('fire');
+    const burnt = tap(game, 4, level).steps.at(-1)!;
+    expect(burnt.state.tiles[4]).toBe('grass');
+    const done = tap(burnt, 5, level).steps.at(-1)!;
+    expect(done.won).toBe(true);
   });
 });
 
@@ -192,7 +205,7 @@ describe('savedGame', () => {
 
 describe('progress', () => {
   it('records each win once', () => {
-    const id = LEVELS[0].id;
+    const id = first().level;
     expect(recordWin([id], first())).toEqual([id]);
     expect(recordWin([], first())).toEqual([id]);
   });

@@ -23,7 +23,7 @@ import {
   type Turn,
 } from './lib/game';
 import { STRINGS, detectLang } from './lib/i18n';
-import { LEVELS } from './lib/levels';
+import { LEVELS, hintFor, worldAfter, worldOf } from './lib/levels';
 import { popMenu, pushMenu, useBackButton } from './lib/use-back-button';
 import { useCheer } from './lib/use-cheer';
 import { useStoredState } from './lib/use-stored-state';
@@ -144,6 +144,14 @@ export default function App() {
 
   const n = LEVELS.indexOf(level) + 1;
   const last = n === LEVELS.length;
+  const hint = hintFor(level);
+  // After the last level of a world, the next friend is on the way.
+  const after = worldAfter(level);
+  const solvedText = last
+    ? t.finaleText
+    : after && after !== 'fire'
+      ? t.meet[after]
+      : t.together[worldOf(level)];
 
   return (
     <main className={view === 'play' ? 'app app--play' : 'app'}>
@@ -213,7 +221,7 @@ export default function App() {
           {game.won ? (
             <section className='card solved'>
               <h2>{last ? t.finale : t.solved}</h2>
-              <p className='solved__text'>{last ? t.finaleText : t.together}</p>
+              <p className='solved__text'>{solvedText}</p>
               {!last && (
                 <div className='solved__actions'>
                   <button
@@ -228,7 +236,7 @@ export default function App() {
           ) : (
             <div className='bar'>
               <span className='bar__level'>{t.level(n)}</span>
-              {n === 1 && <p className='hint'>{t.hint}</p>}
+              {hint && <p className='hint'>{t.hints[hint]}</p>}
               <div className='tools'>
                 <button
                   className='tool'

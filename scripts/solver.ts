@@ -1,5 +1,5 @@
 // A fast solver for making levels: the same rules as src/lib/elementals.ts
-// for fire and water, on plain numbers, so millions of random boards can be
+// for fire and water (or fire alone), on plain numbers, so millions of random boards can be
 // tried. The level tests check the levels again with the game's own rules.
 
 const GRASS = 0;
@@ -41,6 +41,11 @@ type Board = {
   bits: number;
   next: number[][];
   start: [number, number];
+  // How many move: 1 for fire alone, 2 with water. Water that isn't there
+  // stands on square n, off the board.
+  movers: number;
+  // Squares, and the one off the board.
+  m: number;
 };
 
 function load(rows: string[]): Board {
@@ -67,7 +72,9 @@ function load(rows: string[]): Board {
     if (x > 0) out.push(i - 1);
     return out;
   });
-  return { w, n, tiles, bit, bits, next, start };
+  const movers = start[1] < 0 ? 1 : 2;
+  if (movers === 1) start[1] = n;
+  return { w, n, tiles, bit, bits, next, start, movers, m: n + 1 };
 }
 
 // The tile on square i once the changes in `mask` are made.
@@ -109,10 +116,12 @@ function change(b: Board, e: number, i: number, mask: number) {
 }
 
 const index = (b: Board, mask: number, p0: number, p1: number) =>
-  (mask * b.n + p0) * b.n + p1;
+  (mask * b.m + p0) * b.m + p1;
+
+const states = (b: Board) => (1 << b.bits) * b.m * b.m;
 
 const won = (b: Board, p0: number, p1: number) =>
-  b.tiles[p0] === TORCH && b.tiles[p1] === SPRING;
+  b.tiles[p0] === TORCH && (p1 === b.n || b.tiles[p1] === SPRING);
 
 // Calls `visit` with every state one step away.
 function successors(
@@ -121,7 +130,7 @@ function successors(
   p: [number, number],
   visit: (m: number, p0: number, p1: number) => void
 ) {
-  for (let e = 0; e < 2; e++) {
+  for (let e = 0; e < b.movers; e++) {
     const other = p[1 - e];
     for (const i of b.next[p[e]]) {
       if (canStep(b, e, i, mask, other))
@@ -137,7 +146,7 @@ function successors(
 // Every state reachable from the start, as [mask, p0, p1] triples; wins
 // are not gone past.
 function reachable(b: Board): number[] {
-  const seen = new Uint8Array((1 << b.bits) * b.n * b.n);
+  const seen = new Uint8Array(states(b));
   const queue: number[] = [0, b.start[0], b.start[1]];
   seen[index(b, 0, b.start[0], b.start[1])] = 1;
   for (let q = 0; q < queue.length; q += 3) {
@@ -156,10 +165,10 @@ function reachable(b: Board): number[] {
 // Whether the level can be won, one step at a time.
 export function solvable(rows: string[]): boolean {
   const b = load(rows);
-  if (b.start[0] < 0 || b.start[1] < 0) return false;
-  const states = reachable(b);
-  for (let q = 0; q < states.length; q += 3)
-    if (won(b, states[q + 1], states[q + 2])) return true;
+  if (b.start[0] < 0) return false;
+  const all = reachable(b);
+  for (let q = 0; q < all.length; q += 3)
+    if (won(b, all[q + 1], all[q + 2])) return true;
   return false;
 }
 
@@ -167,21 +176,21 @@ export function solvable(rows: string[]): boolean {
 // ever spoils the level (for example by one blocking the other in).
 export function noDeadEnds(rows: string[]): boolean {
   const b = load(rows);
-  const states = reachable(b);
-  const good = new Uint8Array((1 << b.bits) * b.n * b.n);
+  const all = reachable(b);
+  const good = new Uint8Array(states(b));
   let left = 0;
-  for (let q = 0; q < states.length; q += 3)
-    if (won(b, states[q + 1], states[q + 2]))
-      good[index(b, states[q], states[q + 1], states[q + 2])] = 1;
+  for (let q = 0; q < all.length; q += 3)
+    if (won(b, all[q + 1], all[q + 2]))
+      good[index(b, all[q], all[q + 1], all[q + 2])] = 1;
     else left++;
   // Mark states with a good next state as good, until nothing changes.
   for (let changed = true; changed && left;) {
     changed = false;
-    for (let q = 0; q < states.length; q += 3) {
-      const k = index(b, states[q], states[q + 1], states[q + 2]);
+    for (let q = 0; q < all.length; q += 3) {
+      const k = index(b, all[q], all[q + 1], all[q + 2]);
       if (good[k]) continue;
       let ok = false;
-      successors(b, states[q], [states[q + 1], states[q + 2]], (m, p0, p1) => {
+      successors(b, all[q], [all[q + 1], all[q + 2]], (m, p0, p1) => {
         if (good[index(b, m, p0, p1)]) ok = true;
       });
       if (ok) {
@@ -201,7 +210,7 @@ export function taps(
   rows: string[]
 ): { taps: number; switches: number } | undefined {
   const b = load(rows);
-  const seen = new Uint8Array((1 << b.bits) * b.n * b.n);
+  const seen = new Uint8Array(states(b));
   type Node = [mask: number, p0: number, p1: number, who: number, sw: number];
   let layer: Node[] = [[0, b.start[0], b.start[1], -1, 0]];
   seen[index(b, 0, b.start[0], b.start[1])] = 1;
@@ -214,7 +223,7 @@ export function taps(
     let best = Infinity;
     for (const [mask, p0, p1, who, sw] of layer) {
       const p = [p0, p1];
-      for (let e = 0; e < 2; e++) {
+      for (let e = 0; e < b.movers; e++) {
         const other = p[1 - e];
         const switches = sw + (who >= 0 && who !== e ? 1 : 0);
         // Everywhere e can walk to.

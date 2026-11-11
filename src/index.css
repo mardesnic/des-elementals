@@ -793,6 +793,24 @@ h2 {
 
 /* New game and settings */
 
+.world {
+  display: grid;
+  gap: 10px;
+}
+
+.world__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1rem;
+}
+
+.world__friend {
+  display: grid;
+  width: 30px;
+  height: 30px;
+}
+
 .levels {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

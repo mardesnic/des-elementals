@@ -1,4 +1,5 @@
 import type { Element, Tile } from './elementals';
+import type { Hint, World } from './levels';
 
 export const LANGS = ['en', 'hr'] as const;
 export type Lang = (typeof LANGS)[number];
@@ -21,11 +22,27 @@ const en = {
   levels: 'Levels',
   done: 'Done',
   level: (n: number) => `Level ${n}`,
-  hint: 'Bring fire to the fire temple and water to the water temple. Tap one, then where it should go.',
+  hints: {
+    fire: 'Take fire to its temple, where it becomes the sun. Tap where it should go.',
+    bramble: 'Fire can burn a thorny bush. Tap the bush!',
+    fireWater:
+      'Bring fire to the fire temple and water to the water temple. Tap one, then where it should go.',
+  } satisfies Record<Hint, string>,
   undo: 'Undo',
   clear: 'Start over',
   solved: 'Well done!',
-  together: 'The sun shines, the rain falls, and the flowers grow!',
+  together: {
+    fire: 'The sun shines and the flowers grow!',
+    fireWater: 'The sun shines, the rain falls, and the flowers grow!',
+  } satisfies Record<World, string>,
+  // After the last level of a world, for the one that comes next.
+  meet: {
+    fireWater: 'The sun shines! Next, water joins fire.',
+  } satisfies Record<Exclude<World, 'fire'>, string>,
+  worlds: {
+    fire: 'Fire',
+    fireWater: 'Fire and water',
+  } satisfies Record<World, string>,
   next: 'Next level',
   finale: 'You did it all!',
   finaleText: 'Sun and rain woke the whole garden, and a rainbow came out!',
@@ -79,11 +96,26 @@ const hr: Strings = {
   levels: 'Razine',
   done: 'Gotovo',
   level: (n: number) => `Razina ${n}`,
-  hint: 'Dovedi vatru do vatrenog hrama, a vodu do vodenog. Dodirni jednu, pa kamo treba ići.',
+  hints: {
+    fire: 'Odvedi vatru do njezina hrama, gdje postaje sunce. Dodirni kamo treba ići.',
+    bramble: 'Vatra može spaliti trnoviti grm. Dodirni grm!',
+    fireWater:
+      'Dovedi vatru do vatrenog hrama, a vodu do vodenog. Dodirni jednu, pa kamo treba ići.',
+  },
   undo: 'Poništi',
   clear: 'Ispočetka',
   solved: 'Bravo!',
-  together: 'Sunce sja, kiša pada, a cvijeće raste!',
+  together: {
+    fire: 'Sunce sja, a cvijeće raste!',
+    fireWater: 'Sunce sja, kiša pada, a cvijeće raste!',
+  },
+  meet: {
+    fireWater: 'Sunce sja! Sada vatri dolazi voda.',
+  },
+  worlds: {
+    fire: 'Vatra',
+    fireWater: 'Vatra i voda',
+  },
   next: 'Sljedeća razina',
   finale: 'Sve je riješeno!',
   finaleText: 'Sunce i kiša probudili su cijeli vrt, a izašla je i duga!',

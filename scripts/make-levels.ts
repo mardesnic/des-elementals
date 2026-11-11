@@ -1,5 +1,6 @@
 // Builds src/levels.json: random boards, kept only when every obstacle on
 // them is needed, then the best of them in order of how many taps they take.
+// First a world of fire alone, then fire and water together.
 //
 //   npm run levels
 //
@@ -22,9 +23,37 @@ type Slot = {
   // Fewest taps to win, and fewest changes of who moves on the way.
   taps: [number, number];
   switches: number;
+  // Fire on its own, without water.
+  alone?: boolean;
+  // The most brambles, if not 2.
+  brambles?: number;
 };
 
-// Easiest first: one new thing at a time, then mixed. Water with ice
+// Fire alone: walking to its temple, then burning brambles on the way.
+// Ice is left out: melted, it only blocks fire.
+const FIRE: Slot[] = [
+  { size: [4, 4], kinds: [], taps: [1, 1], switches: 0, alone: true },
+  { size: [4, 4], kinds: ['bramble'], taps: [2, 2], switches: 0, alone: true },
+  { size: [5, 5], kinds: ['bramble'], taps: [3, 3], switches: 0, alone: true },
+  {
+    size: [5, 5],
+    kinds: ['bramble'],
+    taps: [3, 4],
+    switches: 0,
+    alone: true,
+    brambles: 3,
+  },
+  {
+    size: [6, 6],
+    kinds: ['bramble'],
+    taps: [4, 4],
+    switches: 0,
+    alone: true,
+    brambles: 3,
+  },
+];
+
+// Fire and water. Easiest first: one new thing at a time, then mixed. Water with ice
 // never made a good board, so those mixes are left out.
 const SLOTS: Slot[] = [
   { size: [5, 5], kinds: [], taps: [2, 2], switches: 1 },
@@ -135,7 +164,7 @@ function randomBoard(slot: Slot, rnd: () => number): string[] {
   const several = (n: number) => 1 + pick(n);
   for (const kind of slot.kinds) {
     if (kind === 'bramble')
-      for (let k = several(2); k > 0; k--) cells[free()] = '*';
+      for (let k = several(slot.brambles ?? 2); k > 0; k--) cells[free()] = '*';
     if (kind === 'ice')
       for (let k = several(2); k > 0; k--) cells[free()] = 'i';
     if (kind === 'grate' || kind === 'sluice') {
@@ -147,9 +176,9 @@ function randomBoard(slot: Slot, rnd: () => number): string[] {
 
   // The temples, for fire and for water.
   cells[free()] = 't';
-  cells[free()] = 's';
+  if (!slot.alone) cells[free()] = 's';
   cells[free()] = 'F';
-  cells[free()] = 'W';
+  if (!slot.alone) cells[free()] = 'W';
 
   return Array.from({ length: h }, (_, r) =>
     cells.slice(r * w, (r + 1) * w).join('')
@@ -198,59 +227,90 @@ const hasAll = (rows: string[], slot: Slot) => {
   return slot.kinds.every((k) => flat.includes(letter[k]));
 };
 
-// The first few levels each bring in one new thing; after them, levels
-// go from fewest taps to most.
-const INTRO = 7;
-const levels: (Level & { taps: number })[] = [];
+// Rows written as one string, for telling boards apart.
 const used = new Set<string>();
-const rnd = mulberry32(20261111);
 
-for (const [n, slot] of SLOTS.entries()) {
-  let best:
-    | { rows: string[]; score: number; taps: number; switches: number }
-    | undefined;
-  for (let t = 0; t < TRIES; t++) {
-    let rows: string[];
-    try {
-      rows = randomBoard(slot, rnd);
-    } catch (e) {
-      if (e instanceof Full) continue;
-      throw e;
+// The best board for each slot, with its own seeded random numbers, so
+// adding a world doesn't change the boards of another.
+function make(slots: Slot[], seed: number) {
+  const levels: (Level & { taps: number })[] = [];
+  const rnd = mulberry32(seed);
+  for (const [n, slot] of slots.entries()) {
+    let best:
+      | { rows: string[]; score: number; taps: number; switches: number }
+      | undefined;
+    for (let t = 0; t < TRIES; t++) {
+      let rows: string[];
+      try {
+        rows = randomBoard(slot, rnd);
+      } catch (e) {
+        if (e instanceof Full) continue;
+        throw e;
+      }
+      const key = rows.join('/');
+      if (used.has(key) || !hasAll(rows, slot) || !solvable(rows)) continue;
+      if (!allNeeded(rows, slot)) continue;
+      const result = tapsToWin(rows);
+      if (!result) continue;
+      const { taps, switches } = result;
+      if (
+        taps < slot.taps[0] ||
+        taps > slot.taps[1] ||
+        switches < slot.switches
+      )
+        continue;
+      // Prefer more changes of who moves, then more taps, then fewer rocks
+      // (open boards look friendlier). Fire alone also likes a long walk.
+      const rocks = key.split('#').length;
+      const score =
+        switches * 100 +
+        taps * 10 -
+        rocks +
+        (slot.alone ? 2 * distance(rows, 'F', 't') : 0);
+      // The dead-end check is the slow one, so it runs last.
+      if ((!best || score > best.score) && noDeadEnds(rows))
+        best = { rows, score, taps, switches };
     }
-    const key = rows.join('/');
-    if (used.has(key) || !hasAll(rows, slot) || !solvable(rows)) continue;
-    if (!allNeeded(rows, slot)) continue;
-    const result = tapsToWin(rows);
-    if (!result) continue;
-    const { taps, switches } = result;
-    if (taps < slot.taps[0] || taps > slot.taps[1] || switches < slot.switches)
+    if (!best) {
+      console.error(`slot ${n + 1}: nothing found`, slot);
       continue;
-    // Prefer more changes of who moves, then more taps, then fewer rocks
-    // (open boards look friendlier).
-    const rocks = key.split('#').length;
-    const score = switches * 100 + taps * 10 - rocks;
-    // The dead-end check is the slow one, so it runs last.
-    if ((!best || score > best.score) && noDeadEnds(rows))
-      best = { rows, score, taps, switches };
+    }
+    used.add(best.rows.join('/'));
+    const id = createHash('sha1')
+      .update(best.rows.join('/'))
+      .digest('hex')
+      .slice(0, 8);
+    levels.push({ id, rows: best.rows, taps: best.taps * 10 + best.switches });
+    console.log(
+      `${n + 1}. ${slot.kinds.join('+') || 'walk'}: ${best.taps} taps, ${best.switches} switches\n   ${best.rows.join('\n   ')}`
+    );
   }
-  if (!best) {
-    console.error(`slot ${n + 1}: nothing found`, slot);
-    continue;
-  }
-  used.add(best.rows.join('/'));
-  const id = createHash('sha1')
-    .update(best.rows.join('/'))
-    .digest('hex')
-    .slice(0, 8);
-  levels.push({ id, rows: best.rows, taps: best.taps * 10 + best.switches });
-  console.log(
-    `${n + 1}. ${slot.kinds.join('+') || 'walk'}: ${best.taps} taps, ${best.switches} switches\n   ${best.rows.join('\n   ')}`
+  return levels;
+}
+
+// How many squares apart two letters are, across and down.
+function distance(rows: string[], a: string, b: string) {
+  const flat = rows.join('');
+  const w = rows[0].length;
+  const i = flat.indexOf(a);
+  const j = flat.indexOf(b);
+  return (
+    Math.abs((i % w) - (j % w)) +
+    Math.abs(Math.floor(i / w) - Math.floor(j / w))
   );
 }
 
+// Fire's world goes in the order of its slots. With water, the first few
+// levels each bring in one new thing; after them, levels go from fewest
+// taps to most.
+const INTRO = 7;
+const fire = make(FIRE, 20261112);
+const both = make(SLOTS, 20261111);
+
 const ordered = [
-  ...levels.slice(0, INTRO),
-  ...levels.slice(INTRO).sort((p, q) => p.taps - q.taps),
+  ...fire,
+  ...both.slice(0, INTRO),
+  ...both.slice(INTRO).sort((p, q) => p.taps - q.taps),
 ].map(({ id, rows }) => ({ id, rows }));
 writeFileSync('src/levels.json', JSON.stringify(ordered, null, 2) + '\n');
-console.log(`${levels.length} levels`);
+console.log(`${ordered.length} levels`);

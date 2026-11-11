@@ -14,7 +14,7 @@ import {
   type Level,
   type State,
 } from './elementals';
-import { LEVELS } from './levels';
+import { LEVELS, WORLDS, hintFor, worldAfter, worldOf } from './levels';
 
 // How many reachable positions can no longer be won. Walks every move from
 // the start, then works back from the wins.
@@ -67,12 +67,40 @@ describe('levels', () => {
     for (const row of level.rows) expect(row).toHaveLength(width);
   });
 
-  it.each(LEVELS)('$id has fire, water and their temples', (level) => {
+  it.each(LEVELS)('$id has its friends and their temples', (level) => {
     const s = parse(level);
-    expect(elementsIn(s)).toEqual(['fire', 'water']);
+    const alone = worldOf(level) === 'fire';
+    expect(elementsIn(s)).toEqual(alone ? ['fire'] : ['fire', 'water']);
     expect(s.tiles.filter((t) => t === 'fireTemple')).toHaveLength(1);
-    expect(s.tiles.filter((t) => t === 'waterTemple')).toHaveLength(1);
+    expect(s.tiles.filter((t) => t === 'waterTemple')).toHaveLength(
+      alone ? 0 : 1
+    );
     expect(isWon(s)).toBe(false);
+  });
+
+  it('come in worlds, one after another', () => {
+    const order = LEVELS.map(worldOf).filter((w, k, a) => w !== a[k - 1]);
+    expect(order).toEqual([...WORLDS]);
+    expect(LEVELS.filter((l) => worldOf(l) === 'fire').length).toBeGreaterThan(
+      2
+    );
+  });
+
+  it('tell how to play at the start of each world', () => {
+    const fire = LEVELS.findIndex((l) => worldOf(l) === 'fire');
+    const both = LEVELS.findIndex((l) => worldOf(l) === 'fireWater');
+    expect(hintFor(LEVELS[fire])).toBe('fire');
+    expect(hintFor(LEVELS[both])).toBe('fireWater');
+    expect(worldAfter(LEVELS[both - 1])).toBe('fireWater');
+    expect(worldAfter(LEVELS[both])).toBeUndefined();
+    expect(worldAfter(LEVELS.at(-1)!)).toBeUndefined();
+    const bramble = LEVELS.findIndex((l) => l.rows.join('').includes('*'));
+    expect(hintFor(LEVELS[bramble])).toBe('bramble');
+  });
+
+  it('keep fire alone away from ice, which would only block it', () => {
+    for (const level of LEVELS.filter((l) => worldOf(l) === 'fire'))
+      expect(level.rows.join('')).not.toMatch(/[i~aAbB]/);
   });
 
   it('bring in the brazier and the wheel each on its own first', () => {
@@ -84,6 +112,7 @@ describe('levels', () => {
   });
 
   it.each(LEVELS)('$id can be won', (level) => {
+    expect(solvable(level.rows)).toBe(true);
     const b = boardOf(level);
     expect(movesToWin(b, parse(level))).toBeGreaterThan(0);
     expect(tapsToWin(b, parse(level))).toBeDefined();

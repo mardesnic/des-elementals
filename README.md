@@ -1,6 +1,6 @@
 # Elementals
 
-A free puzzle game for young kids that works offline. You guide two little element friends, fire and water, across a small board until each reaches its own temple: there fire becomes the sun and water a rain cloud, and the flowers grow. Each one can do something the other can't: fire melts ice, burns away thorny bushes and keeps a brazier burning to raise a grate; water swims and turns a water wheel to raise a sluice gate. Helping one clears the way for the other.
+A free puzzle game for young kids that works offline. You guide little element friends, first fire on its own and then fire and water together, across a small board until each reaches its own temple: there fire becomes the sun and water a rain cloud, and the flowers grow. Each one can do something the other can't: fire melts ice, burns away thorny bushes and keeps a brazier burning to raise a grate; water swims and turns a water wheel to raise a sluice gate. Helping one clears the way for the other.
 
 Made for ages 5 and up. There is no timer and no way to lose. Undo takes back the last move, and Start over resets the level.
 
@@ -12,7 +12,7 @@ On your phone, open it and choose **Add to Home Screen** (Safari) or **Install a
 
 ## Features
 
-- 20 levels with fire and water, from a first walk to long puzzles
+- Levels in worlds, one friend more in each: first fire alone, learning to walk and to burn thorny bushes, then 21 levels with fire and water, from a first walk together to long puzzles
 - Fire melts ice into water and burns thorny bushes away; only water can swim
 - Fire on the brazier holds the grate up, water on the wheel holds the sluice up; only the other one can go through
 - Everything on the board is drawn by hand as SVG
