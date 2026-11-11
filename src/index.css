@@ -13,8 +13,9 @@
   --water-deep: #339af0;
   --ice: #d0ebff;
   --bramble: #94d82d;
-  --button: #fab005;
-  --door: #a0522d;
+  --colour-A: #f08c00;
+  --colour-B: #7950f2;
+  --goal: #ffd8e4;
   --ring: #ffffff;
   --radius: 18px;
 
@@ -46,8 +47,9 @@
     --water-deep: #185f9c;
     --ice: #a5d8ff;
     --bramble: #5c940d;
-    --button: #f59f00;
-    --door: #8b4513;
+    --colour-A: #f59f00;
+    --colour-B: #9775fa;
+    --goal: #5c2b3d;
     --ring: #e8eaee;
   }
 }
@@ -233,32 +235,58 @@ h2 {
   background: var(--bramble);
 }
 
-/* A button is a round pad; while it's held the doors are open. */
+.tile--goal {
+  background: var(--goal);
+}
+
+/* Buttons and doors come in two colours; a button opens its own colour. */
+.tile--A {
+  --colour: var(--colour-A);
+}
+
+.tile--B {
+  --colour: var(--colour-B);
+}
+
+/* A button is a round pad. */
 .tile--button::after {
   content: '';
   width: 58%;
   height: 58%;
   border-radius: 50%;
-  background: var(--button);
+  background: var(--colour);
   box-shadow:
     inset 0 -4px 0 rgb(0 0 0 / 0.2),
-    0 0 0 3px color-mix(in srgb, var(--button) 40%, transparent);
+    0 0 0 3px color-mix(in srgb, var(--colour) 40%, transparent);
 }
 
-/* A closed door is wooden planks; an open one is just its frame. */
+/* A closed door is planks in its colour; an open one is just its frame. */
 .tile--door {
   background: repeating-linear-gradient(
     90deg,
-    var(--door) 0 22%,
-    color-mix(in srgb, var(--door) 70%, black) 22% 26%
+    var(--colour) 0 22%,
+    color-mix(in srgb, var(--colour) 70%, black) 22% 26%
   );
-  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--door) 60%, black);
-  transition: background 0.2s;
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--colour) 60%, black);
 }
 
 .tile--open {
   background: var(--grass);
-  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--door) 60%, transparent);
+  box-shadow: inset 0 0 0 3px var(--colour);
+}
+
+/* Where the picked one can walk: a soft dot. */
+.tile--reach {
+  position: relative;
+}
+
+.tile--reach::before {
+  content: '';
+  position: absolute;
+  width: 16%;
+  height: 16%;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 @keyframes appear {
@@ -281,7 +309,7 @@ h2 {
     calc(var(--x) * var(--unit)),
     calc(var(--y) * var(--unit))
   );
-  transition: transform 0.18s ease-out;
+  transition: transform 0.13s linear;
   pointer-events: none;
 }
 

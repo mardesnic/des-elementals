@@ -2,8 +2,9 @@ import { useRef, type CSSProperties } from 'react';
 
 import {
   boardOf,
-  doorsOpen,
+  doorColour,
   elementsIn,
+  shownOpen,
   type Element,
   type Level,
   type State,
@@ -19,6 +20,7 @@ const ON_TILE: Partial<Record<Tile, string>> = {
   rock: '🪨',
   ice: '🧊',
   bramble: '🌵',
+  goal: '❤️',
 };
 
 // A drag shorter than this is a tap.
@@ -31,6 +33,7 @@ export function Board({
   state,
   active,
   won,
+  reach,
   bump,
   onTap,
   onBumpDone,
@@ -41,6 +44,8 @@ export function Board({
   state: State;
   active: Element;
   won: boolean;
+  // Squares the active one can walk to, shown with a dot.
+  reach: Set<number>;
   // The last one that couldn't move, counted so each bump shakes again.
   bump?: Bump;
   onTap: (i: number) => void;
@@ -50,7 +55,6 @@ export function Board({
   t: Strings;
 }) {
   const b = boardOf(level);
-  const open = doorsOpen(state);
   const tiles = useRef<HTMLDivElement>(null);
   const down = useRef<{ x: number; y: number; i: number } | null>(null);
 
@@ -83,8 +87,6 @@ export function Board({
     else onSwipe(start.i, 0, Math.sign(dy));
   };
 
-  const occupied = new Set(elementsIn(state).map((e) => state.at[e]));
-
   return (
     <div
       className={won ? 'board board--won' : 'board'}
@@ -98,12 +100,21 @@ export function Board({
         onPointerCancel={() => (down.current = null)}
       >
         {state.tiles.map((tile, i) => {
-          const isOpen = tile === 'door' && (open || occupied.has(i));
+          const isOpen = shownOpen(state, i);
+          const colour = doorColour(tile) ?? tile.match(/^button(.)$/)?.[1];
           return (
             <span
               // A tile that changes is drawn anew, so it pops in.
               key={`${i}-${tile}`}
-              className={`tile tile--${tile}${isOpen ? ' tile--open' : ''}`}
+              className={[
+                'tile',
+                `tile--${tile.replace(/[AB]$/, '')}`,
+                colour && `tile--${colour}`,
+                isOpen && 'tile--open',
+                reach.has(i) && 'tile--reach',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               role='img'
               aria-label={
                 isOpen ? `${t.tiles[tile]}, ${t.open}` : t.tiles[tile]

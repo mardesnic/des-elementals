@@ -1,96 +1,144 @@
 import { describe, expect, it } from 'vitest';
 
+import { boardOf, walks } from './elementals';
 import {
   isFresh,
   levelById,
   newGame,
   nextLevel,
   nudge,
+  reachable,
   recordWin,
   savedGame,
   tap,
+  type Game,
 } from './game';
 import { LEVELS } from './levels';
 
-// meet:
-//   F....
-//   .###.
-//   .....
-//   .###.
-//   ....W
-const meet = () => newGame(levelById('meet')!);
+const first = () => newGame(LEVELS[0]);
+const board = (g: Game) => boardOf(levelById(g.level)!);
+
+// A square far from everyone, that the active one can't walk to.
+const nowhere = (g: Game) =>
+  g.state.tiles.findIndex(
+    (t, i) =>
+      t === 'rock' &&
+      !Object.values(g.state.at).includes(i) &&
+      ![...Object.values(g.state.at)].some(
+        (p) => Math.abs((p as number) - i) === 1
+      )
+  );
 
 describe('tap', () => {
-  it('moves the active one to a square next to it', () => {
-    const { game, stuck } = tap(meet(), 1);
-    expect(game.state.at.fire).toBe(1);
+  it('walks the active one to a square, a step at a time', () => {
+    const game = first();
+    const ways = walks(board(game), game.state, 'fire');
+    const [to, path] = [...ways].sort((a, b) => b[1].length - a[1].length)[0];
+    const { steps, stuck } = tap(game, to);
     expect(stuck).toBeUndefined();
+    expect(steps.map((s) => s.state.at.fire)).toEqual(path);
   });
 
-  it('picks the one that is tapped', () => {
-    const { game } = tap(meet(), 24);
-    expect(game.active).toBe('water');
-    expect(game.state).toEqual(meet().state);
+  it('picks the one that is tapped, without moving anyone', () => {
+    const game = first();
+    const { steps } = tap(game, game.state.at.water!);
+    expect(steps).toHaveLength(1);
+    expect(steps[0].active).toBe('water');
+    expect(steps[0].state).toBe(game.state);
+    expect(tap(game, game.state.at.fire!).steps).toEqual([]);
   });
 
-  it('moves the other one when the square is only next to it', () => {
-    const { game } = tap(meet(), 23);
-    expect(game.active).toBe('water');
-    expect(game.state.at.water).toBe(23);
+  it('shakes the active one when nobody can get there', () => {
+    const game = first();
+    const rock = nowhere(game);
+    if (rock < 0) return;
+    expect(tap(game, rock)).toEqual({ steps: [], stuck: 'fire' });
   });
 
-  it('says who is stuck when the way is blocked', () => {
-    const { game, stuck } = tap(tap(meet(), 1).game, 6);
-    expect(stuck).toBe('fire');
-    expect(game.state.at.fire).toBe(1);
+  it('wins when both reach the meeting place', () => {
+    let game = first();
+    const hearts = game.state.tiles.flatMap((t, i) =>
+      t === 'goal' ? [i] : []
+    );
+    for (const [e, h] of [
+      ['fire', hearts[0]],
+      ['water', hearts[1]],
+    ] as const) {
+      const at = game.state.at[e]!;
+      game = { ...game, active: e };
+      const { steps } = tap(game, h === at ? hearts[0] : h);
+      if (steps.length) game = steps.at(-1)!;
+    }
+    const all = Object.values(game.state.at).every(
+      (i) => game.state.tiles[i as number] === 'goal'
+    );
+    expect(game.won).toBe(all);
   });
+});
 
-  it('ignores squares far from everyone', () => {
-    const start = meet();
-    expect(tap(start, 12).game).toBe(start);
+describe('melting by tap', () => {
+  it('walks fire up to the ice, then melts it', () => {
+    const level = LEVELS.find((l) => l.rows.join('').includes('i'))!;
+    const game = newGame(level);
+    const b = boardOf(level);
+    const ices = game.state.tiles.flatMap((t, i) => (t === 'ice' ? [i] : []));
+    const ways = walks(b, game.state, 'fire');
+    const ice = ices.find((i) =>
+      [game.state.at.fire!, ...ways.keys()].some(
+        (p) => Math.abs(p - i) === 1 || Math.abs(p - i) === b.width
+      )
+    );
+    if (ice === undefined) return;
+    const { steps } = tap(game, ice);
+    const last = steps.at(-1)!;
+    expect(last.state.tiles[ice]).toBe('water');
+    expect(last.state.at.fire).not.toBe(ice);
   });
+});
 
-  it('wins when they meet', () => {
-    let game = meet();
-    for (const i of [1, 2, 3, 4, 9, 14]) game = tap(game, i).game;
-    expect(game.won).toBe(false);
-    game = tap(game, 19).game;
-    expect(game.won).toBe(true);
-    expect(tap(game, 18).game).toBe(game);
+describe('nudge', () => {
+  it('moves the active one a single step, or shakes it', () => {
+    const game = first();
+    const b = board(game);
+    const at = game.state.at.fire!;
+    const can = reachable(game);
+    for (const [dx, dy] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]) {
+      const x = (at % b.width) + dx;
+      const y = Math.floor(at / b.width) + dy;
+      const to = y * b.width + x;
+      const inside = x >= 0 && y >= 0 && x < b.width && y < b.height;
+      const turn = nudge(game, dx, dy);
+      if (inside && can.has(to)) expect(turn.steps[0].state.at.fire).toBe(to);
+      else expect(turn.stuck).toBe('fire');
+    }
   });
 });
 
 describe('isFresh', () => {
   it('is fresh until something moves', () => {
-    expect(isFresh(meet())).toBe(true);
-    expect(isFresh(tap(meet(), 24).game)).toBe(true);
-    expect(isFresh(tap(meet(), 1).game)).toBe(false);
-  });
-});
-
-describe('nudge', () => {
-  it('moves the active one by a step', () => {
-    expect(nudge(meet(), 1, 0).game.state.at.fire).toBe(1);
-    expect(nudge(meet(), 0, 1).game.state.at.fire).toBe(5);
-  });
-
-  it('stops at the edge', () => {
-    const { game, stuck } = nudge(meet(), -1, 0);
-    expect(stuck).toBe('fire');
-    expect(game.state.at.fire).toBe(0);
+    const game = first();
+    expect(isFresh(game)).toBe(true);
+    expect(isFresh(tap(game, game.state.at.water!).steps[0])).toBe(true);
+    const somewhere = [...reachable(game)][0];
+    expect(isFresh(tap(game, somewhere).steps[0])).toBe(false);
   });
 });
 
 describe('savedGame', () => {
   it('keeps a game of a level that is still there', () => {
-    const game = meet();
+    const game = first();
     expect(savedGame(game)).toBe(game);
   });
 
   it('drops a game of a level that is gone or changed', () => {
     expect(savedGame(undefined)).toBeUndefined();
-    expect(savedGame({ ...meet(), level: 'gone' })).toBeUndefined();
-    const game = meet();
+    expect(savedGame({ ...first(), level: 'gone' })).toBeUndefined();
+    const game = first();
     const smaller = { ...game.state, tiles: game.state.tiles.slice(1) };
     expect(savedGame({ ...game, state: smaller })).toBeUndefined();
   });
@@ -98,16 +146,18 @@ describe('savedGame', () => {
 
 describe('progress', () => {
   it('records each win once', () => {
-    expect(recordWin(['meet'], meet())).toEqual(['meet']);
-    expect(recordWin([], meet())).toEqual(['meet']);
+    const id = LEVELS[0].id;
+    expect(recordWin([id], first())).toEqual([id]);
+    expect(recordWin([], first())).toEqual([id]);
   });
 
   it('goes on to the next level not yet won', () => {
-    expect(nextLevel('meet', []).id).toBe(LEVELS[1].id);
-    expect(nextLevel('meet', [LEVELS[1].id]).id).toBe(LEVELS[2].id);
+    const [a, b, c] = LEVELS.map((l) => l.id);
+    expect(nextLevel(a, []).id).toBe(b);
+    expect(nextLevel(a, [b]).id).toBe(c);
     const last = LEVELS.at(-1)!.id;
-    expect(nextLevel(last, [LEVELS[0].id]).id).toBe(LEVELS[1].id);
+    expect(nextLevel(last, [a]).id).toBe(b);
     const all = LEVELS.map((l) => l.id);
-    expect(nextLevel(last, all).id).toBe(LEVELS[0].id);
+    expect(nextLevel(last, all).id).toBe(a);
   });
 });

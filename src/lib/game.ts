@@ -1,10 +1,12 @@
 import {
   boardOf,
   elementsIn,
-  isNextTo,
   isWon,
   move,
+  neighbours,
+  outcomeAt,
   parse,
+  walks,
   type Element,
   type Level,
   type State,
@@ -53,50 +55,84 @@ export function savedGame(game: Game | undefined): Game | undefined {
   return same ? game : undefined;
 }
 
-// The game after a move, and who tried to move but couldn't, so they can
-// shake.
-export type Turn = { game: Game; stuck?: Element };
+// What a tap or swipe does: the games one after another as someone walks,
+// a step at a time, and who wanted to move but couldn't, so they can shake.
+export type Turn = { steps: Game[]; stuck?: Element };
 
-// What a tap on square i does: picks the one standing there, or moves the
-// active one there. A square next to only the other one moves that one, as
-// that is what a small finger meant.
+// What a tap on square i does. On someone, it picks them. Elsewhere, the
+// one picked walks there, or up to an ice or bramble there and changes it.
+// If they can't but the other one can, the other one goes.
 export function tap(game: Game, i: number): Turn {
-  if (game.won) return { game };
-  const level = levelById(game.level)!;
-  const b = boardOf(level);
+  if (game.won) return { steps: [] };
   const s = game.state;
   const everyone = elementsIn(s);
   const there = everyone.find((e) => s.at[e] === i);
   if (there)
-    return { game: there === game.active ? game : { ...game, active: there } };
-  const mover = isNextTo(b, s.at[game.active]!, i)
-    ? game.active
-    : everyone.find((e) => isNextTo(b, s.at[e]!, i));
-  if (!mover) return { game };
-  return step(game, mover, i);
+    return {
+      steps: there === game.active ? [] : [{ ...game, active: there }],
+    };
+  for (const e of [game.active, ...everyone.filter((o) => o !== game.active)]) {
+    const steps = walkTo(game, e, i);
+    if (steps) return { steps };
+  }
+  return { steps: [], stuck: game.active };
 }
 
 // Moves the active one a square up, right, down or left.
 export function nudge(game: Game, dx: number, dy: number): Turn {
-  if (game.won) return { game };
+  if (game.won) return { steps: [] };
   const b = boardOf(levelById(game.level)!);
   const from = game.state.at[game.active]!;
   const x = (from % b.width) + dx;
   const y = Math.floor(from / b.width) + dy;
-  if (x < 0 || y < 0 || x >= b.width || y >= b.height)
-    return { game, stuck: game.active };
-  return step(game, game.active, y * b.width + x);
+  const to = y * b.width + x;
+  const state =
+    x < 0 || y < 0 || x >= b.width || y >= b.height
+      ? game.state
+      : move(b, game.state, game.active, to);
+  if (state === game.state) return { steps: [], stuck: game.active };
+  return { steps: [{ ...game, state, won: isWon(state) }] };
 }
 
-function step(game: Game, e: Element, to: number): Turn {
+// The squares the active one can walk to, for showing.
+export function reachable(game: Game): Set<number> {
+  if (game.won) return new Set();
   const b = boardOf(levelById(game.level)!);
-  const state = move(b, game.state, e, to);
-  if (state === game.state)
-    return {
-      game: e === game.active ? game : { ...game, active: e },
-      stuck: e,
-    };
-  return { game: { ...game, state, active: e, won: isWon(b, state) } };
+  return new Set(walks(b, game.state, game.active).keys());
+}
+
+// The way for `e` to square i, as one game a step, or undefined if it
+// can't get there.
+function walkTo(game: Game, e: Element, i: number): Game[] | undefined {
+  const b = boardOf(levelById(game.level)!);
+  const s = game.state;
+  const from = s.at[e]!;
+  const ways = walks(b, s, e);
+  let path = ways.get(i);
+  if (!path) {
+    // An ice or bramble: walk up to it, then into it to change it.
+    const here = (n: number) => (n === from ? [] : ways.get(n));
+    const nearest = neighbours(b, i)
+      .map(here)
+      .filter((p): p is number[] => !!p)
+      .filter((p) => {
+        const at = p.at(-1) ?? from;
+        const result = outcomeAt({ ...s, at: { ...s.at, [e]: at } }, e, i);
+        return typeof result === 'object';
+      })
+      .sort((p, q) => p.length - q.length)[0];
+    if (!nearest) return undefined;
+    path = [...nearest, i];
+  }
+  const steps: Game[] = [];
+  let state = s;
+  for (const to of path) {
+    state = move(b, state, e, to);
+    const won = isWon(state);
+    steps.push({ ...game, state, active: e, won });
+    if (won) break;
+  }
+  return steps;
 }
 
 // The ids of the levels won so far.

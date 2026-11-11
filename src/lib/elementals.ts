@@ -1,5 +1,5 @@
-// The rules: a few element friends on a small board of tiles, moved one
-// square at a time, who win by standing next to each other.
+// The rules: a few element friends on a small board of tiles, who win when
+// every one of them stands on the meeting place.
 
 export const ELEMENTS = ['fire', 'water'] as const;
 export type Element = (typeof ELEMENTS)[number];
@@ -11,10 +11,20 @@ export const TILES = {
   '~': 'water',
   i: 'ice',
   '*': 'bramble',
-  o: 'button',
-  D: 'door',
+  a: 'buttonA',
+  A: 'doorA',
+  b: 'buttonB',
+  B: 'doorB',
+  h: 'goal',
 } as const;
 export type Tile = (typeof TILES)[keyof typeof TILES];
+
+// Buttons open the doors of their own colour.
+export type Colour = 'A' | 'B';
+const BUTTON: Partial<Record<Tile, Colour>> = { buttonA: 'A', buttonB: 'B' };
+const DOOR: Partial<Record<Tile, Colour>> = { doorA: 'A', doorB: 'B' };
+export const doorColour = (t: Tile) => DOOR[t];
+export const buttonColour = (t: Tile) => BUTTON[t];
 
 // Where each element starts, written on grass.
 const STARTS: Record<string, Element> = { F: 'fire', W: 'water' };
@@ -73,24 +83,37 @@ export function neighbours({ width, height }: Board, i: number): number[] {
 export const isNextTo = (b: Board, a: number, c: number) =>
   neighbours(b, a).includes(c);
 
-// Doors are open while anyone stands on a button. `besides` is left out,
-// as the one moving can't hold a button and walk through at once.
-export function doorsOpen(s: State, besides?: Element): boolean {
+// Doors of a colour are open while anyone stands on a button of that
+// colour. `besides` is left out, as the one moving can't hold a button and
+// walk through at once.
+export function isOpen(s: State, colour: Colour, besides?: Element): boolean {
   return elementsIn(s).some(
-    (e) => e !== besides && s.tiles[s.at[e]!] === 'button'
+    (e) => e !== besides && BUTTON[s.tiles[s.at[e]!]] === colour
   );
+}
+
+// Whether the door on square i shows open: its button is held, or someone
+// stands in the doorway.
+export function shownOpen(s: State, i: number): boolean {
+  const colour = DOOR[s.tiles[i]];
+  if (!colour) return false;
+  return isOpen(s, colour) || elementsIn(s).some((e) => s.at[e] === i);
 }
 
 // What happens when an element moves onto a tile: it steps on, can't go,
 // or changes the tile and stays where it is.
 export type Outcome = 'step' | 'blocked' | { becomes: Tile };
 
+// `open` says whether the tile, if it is a door, is open.
 export function outcome(e: Element, tile: Tile, open: boolean): Outcome {
   switch (tile) {
     case 'grass':
-    case 'button':
+    case 'goal':
+    case 'buttonA':
+    case 'buttonB':
       return 'step';
-    case 'door':
+    case 'doorA':
+    case 'doorB':
       return open ? 'step' : 'blocked';
     case 'rock':
       return 'blocked';
@@ -103,15 +126,21 @@ export function outcome(e: Element, tile: Tile, open: boolean): Outcome {
   }
 }
 
+// What `e` moving onto square `to` would do, ignoring whether it is next
+// to it.
+export function outcomeAt(s: State, e: Element, to: number): Outcome {
+  if (elementsIn(s).some((o) => s.at[o] === to)) return 'blocked';
+  const tile = s.tiles[to];
+  const colour = DOOR[tile];
+  return outcome(e, tile, colour ? isOpen(s, colour, e) : false);
+}
+
 // The state after `e` tries to move to square `to`, or the same state if
 // it can't.
 export function move(b: Board, s: State, e: Element, to: number): State {
   const from = s.at[e];
   if (from === undefined || !isNextTo(b, from, to)) return s;
-  if (elementsIn(s).some((o) => s.at[o] === to)) return s;
-  // Anyone in a doorway keeps the door open.
-  const open = doorsOpen(s, e);
-  const result = outcome(e, s.tiles[to], open);
+  const result = outcomeAt(s, e, to);
   if (result === 'blocked') return s;
   if (result === 'step') return { ...s, at: { ...s.at, [e]: to } };
   const tiles = s.tiles.slice();
@@ -119,26 +148,34 @@ export function move(b: Board, s: State, e: Element, to: number): State {
   return { ...s, tiles };
 }
 
-// Everyone is next to someone, so they are all together. For two that is
-// just standing side by side.
-export function isWon(b: Board, s: State): boolean {
-  const spots = elementsIn(s).map((e) => s.at[e]!);
-  if (spots.length < 2) return false;
-  // Joined up: everyone can be reached from the first through neighbours.
-  const seen = new Set([spots[0]]);
-  const queue = [spots[0]];
+// Everyone is on the meeting place.
+export function isWon(s: State): boolean {
+  const everyone = elementsIn(s);
+  return (
+    everyone.length > 0 && everyone.every((e) => s.tiles[s.at[e]!] === 'goal')
+  );
+}
+
+// The squares `e` can walk to without changing anything, each with the
+// way there (not counting where it stands).
+export function walks(b: Board, s: State, e: Element): Map<number, number[]> {
+  const start = s.at[e]!;
+  const ways = new Map<number, number[]>([[start, []]]);
+  const queue = [start];
   while (queue.length) {
-    const i = queue.pop()!;
+    const i = queue.shift()!;
+    const here = { ...s, at: { ...s.at, [e]: i } };
     for (const n of neighbours(b, i))
-      if (spots.includes(n) && !seen.has(n)) {
-        seen.add(n);
+      if (!ways.has(n) && outcomeAt(here, e, n) === 'step') {
+        ways.set(n, [...ways.get(i)!, n]);
         queue.push(n);
       }
   }
-  return seen.size === spots.length;
+  ways.delete(start);
+  return ways;
 }
 
-const keyOf = (s: State) =>
+export const keyOf = (s: State) =>
   s.tiles.join() + '|' + ELEMENTS.map((e) => s.at[e] ?? '').join();
 
 function nextStates(b: Board, s: State, movers: readonly Element[]): State[] {
@@ -151,21 +188,21 @@ function nextStates(b: Board, s: State, movers: readonly Element[]): State[] {
   return out;
 }
 
-// The fewest moves to win, or -1 if it can't be won from here. Only
-// `movers` may move (everyone by default). Wins stop the search.
+// The fewest single steps to win, or -1 if it can't be won from here. Only
+// `movers` may move (everyone by default).
 export function movesToWin(
   b: Board,
   start: State,
   movers: readonly Element[] = elementsIn(start)
 ): number {
-  if (isWon(b, start)) return 0;
+  if (isWon(start)) return 0;
   const seen = new Set([keyOf(start)]);
   let layer = [start];
   for (let depth = 1; layer.length; depth++) {
     const next: State[] = [];
     for (const s of layer)
       for (const n of nextStates(b, s, movers)) {
-        if (isWon(b, n)) return depth;
+        if (isWon(n)) return depth;
         const k = keyOf(n);
         if (!seen.has(k)) {
           seen.add(k);
@@ -177,20 +214,49 @@ export function movesToWin(
   return -1;
 }
 
-// Every state reachable from the start without winning on the way.
-export function reachable(b: Board, start: State): State[] {
-  const seen = new Map([[keyOf(start), start]]);
-  const queue = [start];
-  while (queue.length) {
-    const s = queue.pop()!;
-    if (isWon(b, s)) continue;
-    for (const n of nextStates(b, s, elementsIn(s))) {
-      const k = keyOf(n);
-      if (!seen.has(k)) {
-        seen.set(k, n);
-        queue.push(n);
+// The states one tap away: someone walks somewhere, or walks up to a tile
+// and changes it.
+function tapsFrom(b: Board, s: State): { s: State; who: Element }[] {
+  const out: { s: State; who: Element }[] = [];
+  for (const e of elementsIn(s)) {
+    const ways = walks(b, s, e);
+    for (const to of [s.at[e]!, ...ways.keys()]) {
+      const there = to === s.at[e] ? s : { ...s, at: { ...s.at, [e]: to } };
+      if (to !== s.at[e]) out.push({ s: there, who: e });
+      for (const n of neighbours(b, to)) {
+        const changed = move(b, there, e, n);
+        if (changed.tiles !== there.tiles) out.push({ s: changed, who: e });
       }
     }
   }
-  return [...seen.values()];
+  return out;
+}
+
+// The fewest taps to win, and how often the one moving changes on that
+// way, or undefined if it can't be won.
+export function tapsToWin(
+  b: Board,
+  start: State
+): { taps: number; switches: number } | undefined {
+  if (isWon(start)) return { taps: 0, switches: 0 };
+  type Node = { s: State; who?: Element; switches: number };
+  const seen = new Set([keyOf(start)]);
+  let layer: Node[] = [{ s: start, switches: 0 }];
+  for (let taps = 1; layer.length; taps++) {
+    const next: Node[] = [];
+    let best: number | undefined;
+    for (const node of layer)
+      for (const { s, who } of tapsFrom(b, node.s)) {
+        const switches = node.switches + (node.who && node.who !== who ? 1 : 0);
+        if (isWon(s)) best = Math.min(best ?? Infinity, switches);
+        const k = keyOf(s);
+        if (!seen.has(k)) {
+          seen.add(k);
+          next.push({ s, who, switches });
+        }
+      }
+    if (best !== undefined) return { taps, switches: best };
+    layer = next;
+  }
+  return undefined;
 }

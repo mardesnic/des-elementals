@@ -1,32 +1,32 @@
 import { describe, expect, it } from 'vitest';
 
+import { solvable } from '../../scripts/solver';
 import {
-  ELEMENTS,
   boardOf,
   elementsIn,
   isWon,
+  keyOf,
   move,
   movesToWin,
   neighbours,
   parse,
+  tapsToWin,
+  type Level,
   type State,
 } from './elementals';
 import { LEVELS } from './levels';
 
-const keyOf = (s: State) =>
-  s.tiles.join() + '|' + ELEMENTS.map((e) => s.at[e] ?? '').join();
-
 // How many reachable positions can no longer be won. Walks every move from
 // the start, then works back from the wins.
-function deadEnds(level: (typeof LEVELS)[number]): number {
+function deadEnds(level: Level): number {
   const b = boardOf(level);
   const start = parse(level);
   const states = new Map([[keyOf(start), start]]);
   const from = new Map<string, string[]>();
-  const queue = [start];
+  const queue: State[] = [start];
   while (queue.length) {
     const s = queue.pop()!;
-    if (isWon(b, s)) continue;
+    if (isWon(s)) continue;
     for (const e of elementsIn(s))
       for (const to of neighbours(b, s.at[e]!)) {
         const n = move(b, s, e, to);
@@ -39,9 +39,7 @@ function deadEnds(level: (typeof LEVELS)[number]): number {
         }
       }
   }
-  const good = new Set(
-    [...states].filter(([, s]) => isWon(b, s)).map(([k]) => k)
-  );
+  const good = new Set([...states].filter(([, s]) => isWon(s)).map(([k]) => k));
   const back = [...good];
   while (back.length)
     for (const k of from.get(back.pop()!) ?? [])
@@ -53,6 +51,10 @@ function deadEnds(level: (typeof LEVELS)[number]): number {
 }
 
 describe('levels', () => {
+  it('are there', () => {
+    expect(LEVELS.length).toBeGreaterThanOrEqual(20);
+  });
+
   it('have unique ids', () => {
     const ids = LEVELS.map((l) => l.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -65,21 +67,33 @@ describe('levels', () => {
     for (const row of level.rows) expect(row).toHaveLength(width);
   });
 
-  it.each(LEVELS)('$id has fire and water, not yet together', (level) => {
+  it.each(LEVELS)('$id has fire, water and a heart of two', (level) => {
     const s = parse(level);
     expect(elementsIn(s)).toEqual(['fire', 'water']);
-    expect(isWon(boardOf(level), s)).toBe(false);
+    expect(s.tiles.filter((t) => t === 'goal')).toHaveLength(2);
+    expect(isWon(s)).toBe(false);
   });
 
   it.each(LEVELS)('$id can be won', (level) => {
-    expect(movesToWin(boardOf(level), parse(level))).toBeGreaterThan(0);
+    const b = boardOf(level);
+    expect(movesToWin(b, parse(level))).toBeGreaterThan(0);
+    expect(tapsToWin(b, parse(level))).toBeDefined();
   });
 
-  it.each(LEVELS.slice(3))('$id takes both', (level) => {
-    const b = boardOf(level);
-    const s = parse(level);
-    expect(movesToWin(b, s, ['fire'])).toBe(-1);
-    expect(movesToWin(b, s, ['water'])).toBe(-1);
+  // Turning any obstacle into rock makes the level impossible, so each one
+  // has to be used.
+  it.each(LEVELS)('$id needs every obstacle', (level) => {
+    const flat = level.rows.join('');
+    const w = level.rows[0].length;
+    for (let i = 0; i < flat.length; i++) {
+      if (!'*iaAbB'.includes(flat[i])) continue;
+      const rows = level.rows.map((r, y) =>
+        y === Math.floor(i / w)
+          ? r.slice(0, i % w) + '#' + r.slice((i % w) + 1)
+          : r
+      );
+      expect(solvable(rows), `square ${i}`).toBe(false);
+    }
   });
 
   // No way to lose: whatever a kid does, the level can still be won.

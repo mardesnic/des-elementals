@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Board, type Bump } from './components/Board';
 import { Confetti } from './components/Confetti';
@@ -13,6 +13,7 @@ import {
   newGame,
   nextLevel,
   nudge,
+  reachable,
   recordWin,
   savedGame,
   tap,
@@ -30,6 +31,9 @@ import { useWakeLock } from './lib/use-wake-lock';
 
 type View = 'play' | 'levels' | 'settings';
 
+// How long one step of a walk takes, in ms. The CSS slide matches it.
+const STEP_MS = 130;
+
 export default function App() {
   // Keys are prefixed: other apps on the same GitHub Pages origin share
   // this storage.
@@ -37,10 +41,13 @@ export default function App() {
   // A saved game of a level since taken out or changed starts afresh.
   const game = savedGame(store.game) ?? newGame(LEVELS[0]);
   const level = levelById(game.level)!;
-  const [progress, setProgress] = useStoredState<Progress>(
+  // Wrapped in an object: stored state is merged as an object.
+  const [stored, setStored] = useStoredState<{ won: Progress }>(
     'elementals-progress',
-    []
+    { won: [] }
   );
+  const progress = Array.isArray(stored.won) ? stored.won : [];
+  const setProgress = (won: Progress) => setStored({ won });
   const [settings, setSettings] = useStoredState<Settings>(
     'elementals-settings',
     initialSettings
@@ -66,27 +73,46 @@ export default function App() {
     document.title = t.title;
   }, [lang, t]);
 
+  // A walk plays out a step at a time.
+  const walking = useRef<number | undefined>(undefined);
+  const stopWalking = () => {
+    window.clearTimeout(walking.current);
+    walking.current = undefined;
+  };
+  useEffect(() => stopWalking, []);
+
   const start = (id: string) => {
+    stopWalking();
     setStore({ game: newGame(levelById(id)!) });
     setHistory([]);
     setBump(undefined);
     setView('play');
   };
 
-  // Only moves that change the board can be undone; picking who moves can't.
-  const play = ({ game: next, stuck }: Turn) => {
+  // A whole walk is undone at once; picking who moves can't be undone.
+  const play = ({ steps, stuck }: Turn) => {
+    stopWalking();
     if (stuck) {
       setBump((b) => ({ who: stuck, n: (b?.n ?? 0) + 1 }));
       navigator.vibrate?.(30);
     }
-    if (next === game) return;
-    if (next.state !== game.state) setHistory((h) => [...h, game]);
-    setStore({ game: next });
-    if (next.won) {
-      setProgress(recordWin(progress, next));
-      setCelebrating(true);
-      cheer();
-    }
+    if (!steps.length) return;
+    if (steps.some((s) => s.state !== game.state))
+      setHistory((h) => [...h, game]);
+    const go = (k: number) => {
+      const next = steps[k];
+      setStore({ game: next });
+      if (next.won) {
+        setProgress(recordWin(progress, next));
+        setCelebrating(true);
+        cheer();
+      }
+      walking.current =
+        k + 1 < steps.length
+          ? window.setTimeout(() => go(k + 1), STEP_MS)
+          : undefined;
+    };
+    go(0);
   };
 
   const onSwipe = (from: number, dx: number, dy: number) => {
@@ -96,6 +122,7 @@ export default function App() {
   };
 
   const undo = () => {
+    stopWalking();
     if (game.won || !history.length) return;
     setStore({ game: history.at(-1)! });
     setHistory((h) => h.slice(0, -1));
@@ -103,7 +130,7 @@ export default function App() {
 
   const clear = () => {
     if (game.won) return;
-    play({ game: newGame(level) });
+    play({ steps: [newGame(level)] });
   };
 
   const n = LEVELS.indexOf(level) + 1;
@@ -156,6 +183,7 @@ export default function App() {
               state={game.state}
               active={game.active}
               won={game.won}
+              reach={reachable(game)}
               bump={bump}
               onTap={(i) => play(tap(game, i))}
               onBumpDone={() => setBump(undefined)}
