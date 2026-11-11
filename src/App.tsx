@@ -222,12 +222,6 @@ export default function App() {
                   >
                     {t.next}
                   </button>
-                  <button
-                    className='button button--secondary'
-                    onClick={() => setView('levels')}
-                  >
-                    {t.levels}
-                  </button>
                 </div>
               )}
             </section>
