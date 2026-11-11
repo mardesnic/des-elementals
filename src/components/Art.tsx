@@ -321,3 +321,18 @@ export function Flower({ i }: { i: number }) {
     </svg>
   );
 }
+
+// The rainbow over the whole board when the last level is won.
+export function Rainbow() {
+  return (
+    <svg className='rainbow' viewBox='0 0 200 110' aria-hidden='true'>
+      {['a', 'b', 'c', 'd', 'e', 'f'].map((band, k) => (
+        <path
+          key={band}
+          className={`rainbow__band rainbow__band--${band}`}
+          d={`M${10 + k * 9} 106a${90 - k * 9} ${90 - k * 9} 0 0 1 ${180 - k * 18} 0`}
+        />
+      ))}
+    </svg>
+  );
+}

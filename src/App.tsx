@@ -134,6 +134,7 @@ export default function App() {
   };
 
   const n = LEVELS.indexOf(level) + 1;
+  const last = n === LEVELS.length;
 
   return (
     <main className={view === 'play' ? 'app app--play' : 'app'}>
@@ -183,6 +184,7 @@ export default function App() {
               state={game.state}
               active={game.active}
               won={game.won}
+              finale={game.won && last}
               reach={reachable(game)}
               bump={bump}
               onTap={(i) => play(tap(game, i))}
@@ -194,14 +196,14 @@ export default function App() {
 
           {game.won ? (
             <section className='card solved'>
-              <h2>{t.solved}</h2>
-              <p className='solved__text'>{t.together}</p>
+              <h2>{last ? t.finale : t.solved}</h2>
+              <p className='solved__text'>{last ? t.finaleText : t.together}</p>
               <div className='solved__actions'>
                 <button
                   className='button'
                   onClick={() => start(nextLevel(level.id).id)}
                 >
-                  {t.next}
+                  {last ? t.playAgain : t.next}
                 </button>
                 <button
                   className='button button--secondary'

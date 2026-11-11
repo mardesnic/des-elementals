@@ -518,6 +518,54 @@ h2 {
   fill: #f59f00;
 }
 
+.rainbow {
+  position: absolute;
+  left: 0;
+  top: 4%;
+  width: 100%;
+  pointer-events: none;
+  animation: rise 1.2s ease-out 0.4s backwards;
+}
+
+.rainbow__band {
+  fill: none;
+  stroke-width: 9;
+  opacity: 0.85;
+}
+
+.rainbow__band--a {
+  stroke: #ff6b6b;
+}
+
+.rainbow__band--b {
+  stroke: #ffa94d;
+}
+
+.rainbow__band--c {
+  stroke: #ffe066;
+}
+
+.rainbow__band--d {
+  stroke: #69db7c;
+}
+
+.rainbow__band--e {
+  stroke: #4dabf7;
+}
+
+.rainbow__band--f {
+  stroke: #b197fc;
+}
+
+@keyframes rise {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
 @keyframes turn {
   to {
     transform: rotate(1turn);
@@ -720,7 +768,8 @@ h2 {
   .art-flower,
   .art-wheel--turning,
   .art-rays,
-  .art-rain {
+  .art-rain,
+  .rainbow {
     animation: none !important;
   }
 }

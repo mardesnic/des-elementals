@@ -12,7 +12,7 @@ import {
   type State,
 } from '../lib/elementals';
 import type { Strings } from '../lib/i18n';
-import { Flower, Friend, TileArt } from './Art';
+import { Flower, Friend, Rainbow, TileArt } from './Art';
 
 // Whether a flower grows on grass square i once the level is won: about
 // half of them, the same ones every time.
@@ -28,6 +28,7 @@ export function Board({
   state,
   active,
   won,
+  finale,
   reach,
   bump,
   onTap,
@@ -39,6 +40,8 @@ export function Board({
   state: State;
   active: Element;
   won: boolean;
+  // The last level is won: a rainbow comes out.
+  finale?: boolean;
   // Squares the active one can walk to, shown with a dot.
   reach: Set<number>;
   // The last one that couldn't move, counted so each bump shakes again.
@@ -163,6 +166,7 @@ export function Board({
           </span>
         );
       })}
+      {finale && <Rainbow />}
     </div>
   );
 }
