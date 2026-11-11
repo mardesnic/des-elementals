@@ -62,7 +62,11 @@ export type Turn = { steps: Game[]; stuck?: Element };
 // What a tap on square i does. On someone, it picks them. Elsewhere, the
 // one picked walks there, or up to an ice or bramble there and changes it.
 // If they can't but the other one can, the other one goes.
-export function tap(game: Game, i: number): Turn {
+export function tap(
+  game: Game,
+  i: number,
+  level = levelById(game.level)!
+): Turn {
   if (game.won) return { steps: [] };
   const s = game.state;
   const everyone = elementsIn(s);
@@ -72,16 +76,21 @@ export function tap(game: Game, i: number): Turn {
       steps: there === game.active ? [] : [{ ...game, active: there }],
     };
   for (const e of [game.active, ...everyone.filter((o) => o !== game.active)]) {
-    const steps = walkTo(game, e, i);
+    const steps = walkTo(game, e, i, level);
     if (steps) return { steps };
   }
   return { steps: [], stuck: game.active };
 }
 
 // Moves the active one a square up, right, down or left.
-export function nudge(game: Game, dx: number, dy: number): Turn {
+export function nudge(
+  game: Game,
+  dx: number,
+  dy: number,
+  level = levelById(game.level)!
+): Turn {
   if (game.won) return { steps: [] };
-  const b = boardOf(levelById(game.level)!);
+  const b = boardOf(level);
   const from = game.state.at[game.active]!;
   const x = (from % b.width) + dx;
   const y = Math.floor(from / b.width) + dy;
@@ -95,16 +104,24 @@ export function nudge(game: Game, dx: number, dy: number): Turn {
 }
 
 // The squares the active one can walk to, for showing.
-export function reachable(game: Game): Set<number> {
+export function reachable(
+  game: Game,
+  level = levelById(game.level)!
+): Set<number> {
   if (game.won) return new Set();
-  const b = boardOf(levelById(game.level)!);
+  const b = boardOf(level);
   return new Set(walks(b, game.state, game.active).keys());
 }
 
 // The way for `e` to square i, as one game a step, or undefined if it
 // can't get there.
-function walkTo(game: Game, e: Element, i: number): Game[] | undefined {
-  const b = boardOf(levelById(game.level)!);
+function walkTo(
+  game: Game,
+  e: Element,
+  i: number,
+  level: Level
+): Game[] | undefined {
+  const b = boardOf(level);
   const s = game.state;
   const from = s.at[e]!;
   const ways = walks(b, s, e);

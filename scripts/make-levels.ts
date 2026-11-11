@@ -83,7 +83,7 @@ const SLOTS: Slot[] = [
   },
 ];
 
-const TRIES = Number(process.env.TRIES ?? 60000);
+const TRIES = Number(process.env.TRIES ?? 100000);
 
 // A small seeded random generator, so the same levels come out every time.
 function mulberry32(seed: number) {

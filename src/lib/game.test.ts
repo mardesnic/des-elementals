@@ -76,6 +76,54 @@ describe('tap', () => {
   });
 });
 
+describe('tap on small boards', () => {
+  const play = (rows: string[]) => {
+    const level = { id: 'test', rows };
+    let game = newGame(level);
+    const go = (i: number) => {
+      const turn = tap(game, i, level);
+      if (turn.steps.length) game = turn.steps.at(-1)!;
+      return { ...turn, game };
+    };
+    return { go, game: () => game };
+  };
+  const fireAt = (steps: Game[]) => steps.map((g) => g.state.at.fire);
+
+  it('walks through a door while the other holds its button', () => {
+    const { go } = play(['Wa#...', 'F.A.hh']);
+    expect(go(11)).toMatchObject({ steps: [], stuck: 'fire' });
+    go(0); // pick water
+    go(1); // water onto the button
+    go(6); // pick fire
+    expect(fireAt(go(11).steps)).toEqual([7, 8, 9, 10, 11]);
+  });
+
+  it('walks up to ice far away and melts it', () => {
+    const { go } = play(['F..i.W', 'hh####']);
+    const { steps, game } = go(3);
+    expect(fireAt(steps)).toEqual([1, 2, 2]);
+    expect(game.state.tiles[3]).toBe('water');
+  });
+
+  it('moves the other one when only it can get there', () => {
+    const { go } = play(['F#.W', 'hh#.']);
+    const { steps, game } = go(2);
+    expect(steps.map((g) => g.state.at.water)).toEqual([2]);
+    expect(game.active).toBe('water');
+  });
+
+  it('stops a walk on the win', () => {
+    const { go } = play(['Fh..', '.hW.']);
+    go(6);
+    go(5);
+    go(0);
+    const { steps, game } = go(2);
+    expect(fireAt(steps)).toEqual([1]);
+    expect(game.won).toBe(true);
+    expect(go(3).steps).toEqual([]);
+  });
+});
+
 describe('melting by tap', () => {
   it('walks fire up to the ice, then melts it', () => {
     const level = LEVELS.find((l) => l.rows.join('').includes('i'))!;
