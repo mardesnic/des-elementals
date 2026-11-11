@@ -6,6 +6,16 @@
   --border: #e2e5ea;
   --accent: #6741d9;
   --on-accent: #ffffff;
+  --grass: #c3eac0;
+  --grass-edge: #a9dca5;
+  --rock: #a8a29e;
+  --water: #4dabf7;
+  --water-deep: #339af0;
+  --ice: #d0ebff;
+  --bramble: #94d82d;
+  --button: #fab005;
+  --door: #a0522d;
+  --ring: #ffffff;
   --radius: 18px;
 
   color-scheme: light dark;
@@ -29,6 +39,16 @@
     --border: #2c3038;
     --accent: #9775fa;
     --on-accent: #1a0b3d;
+    --grass: #2f4a32;
+    --grass-edge: #263d29;
+    --rock: #57534e;
+    --water: #1c6fb5;
+    --water-deep: #185f9c;
+    --ice: #a5d8ff;
+    --bramble: #5c940d;
+    --button: #f59f00;
+    --door: #8b4513;
+    --ring: #e8eaee;
   }
 }
 
@@ -155,15 +175,160 @@ h2 {
   min-height: 0;
 }
 
-/* Coming soon */
+/* Board: square tiles as big as fit, and the friends standing on them.
+   Everything is sized in units of one tile. */
 
-.soon {
-  text-align: center;
-  font-size: 1.1rem;
+.board {
+  --unit: min(100cqw / var(--w), 100cqh / var(--h));
+  position: relative;
+  width: calc(var(--w) * var(--unit));
+  height: calc(var(--h) * var(--unit));
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.soon__faces {
-  font-size: 3.5rem;
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--w), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--h), minmax(0, 1fr));
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--unit) * 0.3);
+  overflow: hidden;
+  background: var(--grass-edge);
+  gap: 2px;
+  padding: 2px;
+  touch-action: none;
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  border-radius: calc(var(--unit) * 0.14);
+  background: var(--grass);
+  font-size: calc(var(--unit) * 0.58);
+  line-height: 1;
+  animation: appear 0.35s ease-out;
+}
+
+.tile--rock {
+  background: var(--rock);
+}
+
+.tile--water {
+  background:
+    radial-gradient(
+      circle at 30% 35%,
+      rgb(255 255 255 / 0.35) 0 8%,
+      transparent 9%
+    ),
+    linear-gradient(var(--water), var(--water-deep));
+}
+
+.tile--ice {
+  background: var(--ice);
+}
+
+.tile--bramble {
+  background: var(--bramble);
+}
+
+/* A button is a round pad; while it's held the doors are open. */
+.tile--button::after {
+  content: '';
+  width: 58%;
+  height: 58%;
+  border-radius: 50%;
+  background: var(--button);
+  box-shadow:
+    inset 0 -4px 0 rgb(0 0 0 / 0.2),
+    0 0 0 3px color-mix(in srgb, var(--button) 40%, transparent);
+}
+
+/* A closed door is wooden planks; an open one is just its frame. */
+.tile--door {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--door) 0 22%,
+    color-mix(in srgb, var(--door) 70%, black) 22% 26%
+  );
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--door) 60%, black);
+  transition: background 0.2s;
+}
+
+.tile--open {
+  background: var(--grass);
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--door) 60%, transparent);
+}
+
+@keyframes appear {
+  from {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+}
+
+/* The friends slide from square to square. */
+.friend {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: var(--unit);
+  height: var(--unit);
+  transform: translate(
+    calc(var(--x) * var(--unit)),
+    calc(var(--y) * var(--unit))
+  );
+  transition: transform 0.18s ease-out;
+  pointer-events: none;
+}
+
+.friend__face {
+  display: grid;
+  place-items: center;
+  width: 86%;
+  height: 86%;
+  border-radius: 50%;
+  font-size: calc(var(--unit) * 0.6);
+  line-height: 1;
+}
+
+/* The one that moves next has a ring and bobs gently. */
+.friend--active .friend__face {
+  background: color-mix(in srgb, var(--ring) 55%, transparent);
+  box-shadow: 0 0 0 3px var(--accent);
+  animation: bob 1.4s ease-in-out infinite;
+}
+
+.friend__face--stuck {
+  animation: shake 0.35s ease-in-out !important;
+}
+
+.board--won .friend__face {
+  animation: hop 0.5s ease-in-out 3;
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(-6%);
+  }
+}
+
+@keyframes shake {
+  25% {
+    transform: translateX(-12%);
+  }
+  75% {
+    transform: translateX(12%);
+  }
+}
+
+@keyframes hop {
+  50% {
+    transform: translateY(-25%) scale(1.1);
+  }
 }
 
 /* Under the board */
@@ -171,9 +336,21 @@ h2 {
 .bar {
   display: grid;
   grid-template-columns: auto;
+  justify-items: center;
   justify-content: center;
   align-items: center;
   gap: 10px 14px;
+}
+
+.bar__level {
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.hint {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .tools {
@@ -209,7 +386,7 @@ h2 {
   font-size: 1.6rem;
 }
 
-.solved__name {
+.solved__text {
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--muted);
@@ -238,7 +415,9 @@ h2 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .solved {
+  .solved,
+  .tile,
+  .friend__face {
     animation: none !important;
   }
 }
@@ -247,67 +426,31 @@ h2 {
 
 .levels {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
 .level {
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-  padding: 28px 12px 20px;
-  border: 0;
+  aspect-ratio: 1;
+  border: 2px solid transparent;
   border-radius: 16px;
   background: var(--bg);
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   transition: transform 0.1s;
 }
 
 .level:active {
-  transform: scale(0.97);
+  transform: scale(0.95);
 }
 
-/* How hard the level is, as one to four filled dots. */
-.level__pips {
-  display: flex;
-  gap: 5px;
-}
-
-.pip {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--muted) 30%, transparent);
-}
-
-.pip--on {
+.level--won {
   background: var(--accent);
+  color: var(--on-accent);
 }
 
-.stats {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.95rem;
-}
-
-.stats th,
-.stats td {
-  padding: 8px 4px;
-  text-align: right;
-  border-top: 1px solid var(--border);
-}
-
-.stats thead th {
-  border-top: 0;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.stats tbody th {
-  text-align: left;
-  font-weight: 600;
+.level--current {
+  border-color: var(--accent);
 }
 
 .footer {
