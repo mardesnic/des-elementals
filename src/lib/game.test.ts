@@ -196,13 +196,9 @@ describe('progress', () => {
     expect(recordWin([], first())).toEqual([id]);
   });
 
-  it('goes on to the next level not yet won', () => {
-    const [a, b, c] = LEVELS.map((l) => l.id);
-    expect(nextLevel(a, []).id).toBe(b);
-    expect(nextLevel(a, [b]).id).toBe(c);
-    const last = LEVELS.at(-1)!.id;
-    expect(nextLevel(last, [a]).id).toBe(b);
-    const all = LEVELS.map((l) => l.id);
-    expect(nextLevel(last, all).id).toBe(a);
+  it('goes on to the next level, even one already won', () => {
+    const [a, b] = LEVELS.map((l) => l.id);
+    expect(nextLevel(a).id).toBe(b);
+    expect(nextLevel(LEVELS.at(-1)!.id).id).toBe(a);
   });
 });

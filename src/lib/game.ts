@@ -158,12 +158,8 @@ export type Progress = string[];
 export const recordWin = (progress: Progress, game: Game): Progress =>
   progress.includes(game.level) ? progress : [...progress, game.level];
 
-// The next level after this one, or the first one not yet won.
-export function nextLevel(current: string, progress: Progress): Level {
+// The level after this one, in order; after the last, the first.
+export function nextLevel(current: string): Level {
   const at = LEVELS.findIndex((l) => l.id === current);
-  return (
-    LEVELS.slice(at + 1).find((l) => !progress.includes(l.id)) ??
-    LEVELS.find((l) => !progress.includes(l.id)) ??
-    LEVELS[(at + 1) % LEVELS.length]
-  );
+  return LEVELS[(at + 1) % LEVELS.length];
 }

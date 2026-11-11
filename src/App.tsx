@@ -199,7 +199,7 @@ export default function App() {
               <div className='solved__actions'>
                 <button
                   className='button'
-                  onClick={() => start(nextLevel(level.id, progress).id)}
+                  onClick={() => start(nextLevel(level.id).id)}
                 >
                   {t.next}
                 </button>
