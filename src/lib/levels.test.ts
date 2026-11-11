@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { solvable } from '../../scripts/solver';
 import {
+  ELEMENTS,
   boardOf,
   elementsIn,
   isWon,
@@ -69,12 +70,12 @@ describe('levels', () => {
 
   it.each(LEVELS)('$id has its friends and their temples', (level) => {
     const s = parse(level);
-    const alone = worldOf(level) === 'fire';
-    expect(elementsIn(s)).toEqual(alone ? ['fire'] : ['fire', 'water']);
-    expect(s.tiles.filter((t) => t === 'fireTemple')).toHaveLength(1);
-    expect(s.tiles.filter((t) => t === 'waterTemple')).toHaveLength(
-      alone ? 0 : 1
-    );
+    const friends = ELEMENTS.slice(0, WORLDS.indexOf(worldOf(level)) + 1);
+    expect(elementsIn(s)).toEqual(friends);
+    for (const e of ELEMENTS)
+      expect(s.tiles.filter((t) => t === `${e}Temple`)).toHaveLength(
+        friends.includes(e) ? 1 : 0
+      );
     expect(isWon(s)).toBe(false);
   });
 
@@ -88,14 +89,20 @@ describe('levels', () => {
 
   it('tell how to play at the start of each world', () => {
     const fire = LEVELS.findIndex((l) => worldOf(l) === 'fire');
-    const both = LEVELS.findIndex((l) => worldOf(l) === 'fireWater');
+    const both = LEVELS.findIndex((l) => worldOf(l) === 'water');
     expect(hintFor(LEVELS[fire])).toBe('fire');
-    expect(hintFor(LEVELS[both])).toBe('fireWater');
-    expect(worldAfter(LEVELS[both - 1])).toBe('fireWater');
+    expect(hintFor(LEVELS[both])).toBe('water');
+    expect(worldAfter(LEVELS[both - 1])).toBe('water');
     expect(worldAfter(LEVELS[both])).toBeUndefined();
     expect(worldAfter(LEVELS.at(-1)!)).toBeUndefined();
     const bramble = LEVELS.findIndex((l) => l.rows.join('').includes('*'));
     expect(hintFor(LEVELS[bramble])).toBe('bramble');
+    const earth = LEVELS.findIndex((l) => worldOf(l) === 'earth');
+    expect(hintFor(LEVELS[earth])).toBe('earth');
+    expect(worldAfter(LEVELS[earth - 1])).toBe('earth');
+    const stone = LEVELS.findIndex((l) => l.rows.join('').includes('@'));
+    expect(worldOf(LEVELS[stone])).toBe('earth');
+    expect(hintFor(LEVELS[stone])).toBe('boulder');
   });
 
   it('keep fire alone away from ice, which would only block it', () => {
@@ -107,7 +114,7 @@ describe('levels', () => {
     const first = (ch: string) =>
       LEVELS.findIndex((l) => l.rows.join('').includes(ch));
     const kinds = (n: number) =>
-      new Set(LEVELS[n].rows.join('').replace(/[.#FWts]/g, ''));
+      new Set(LEVELS[n].rows.join('').replace(/[.#FWEtse]/g, ''));
     for (const ch of 'ab') expect(kinds(first(ch)).size).toBe(2);
   });
 
@@ -124,7 +131,7 @@ describe('levels', () => {
     const flat = level.rows.join('');
     const w = level.rows[0].length;
     for (let i = 0; i < flat.length; i++) {
-      if (!'*iaAbB'.includes(flat[i])) continue;
+      if (!'*iaAbBo@'.includes(flat[i])) continue;
       const rows = level.rows.map((r, y) =>
         y === Math.floor(i / w)
           ? r.slice(0, i % w) + '#' + r.slice((i % w) + 1)

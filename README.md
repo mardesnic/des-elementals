@@ -1,6 +1,6 @@
 # Elementals
 
-A free puzzle game for young kids that works offline. You guide little element friends, first fire on its own and then fire and water together, across a small board until each reaches its own temple: there fire becomes the sun and water a rain cloud, and the flowers grow. Each one can do something the other can't: fire melts ice, burns away thorny bushes and keeps a brazier burning to raise a grate; water swims and turns a water wheel to raise a sluice gate. Helping one clears the way for the other.
+A free puzzle game for young kids that works offline. You guide little element friends, first fire on its own, then fire and water, then fire, water and earth, across a small board until each reaches its own temple: there fire becomes the sun, water a rain cloud and earth a tree in bloom, and the flowers grow. Each one can do something the others can't: fire melts ice, burns away thorny bushes and keeps a brazier burning to raise a grate; water swims and turns a water wheel to raise a sluice gate; earth fills holes and pushes round stones, which become little bridges in water. Helping one clears the way for the others.
 
 Made for ages 5 and up. There is no timer and no way to lose. Undo takes back the last move, and Start over resets the level.
 
@@ -12,11 +12,12 @@ On your phone, open it and choose **Add to Home Screen** (Safari) or **Install a
 
 ## Features
 
-- Levels in worlds, one friend more in each: first fire alone, learning to walk and to burn thorny bushes, then 21 levels with fire and water, from a first walk together to long puzzles
+- Levels in worlds, one friend more in each: first fire alone, learning to walk and to burn thorny bushes, then fire and water, from a first walk together to long puzzles, then all three with earth
 - Fire melts ice into water and burns thorny bushes away; only water can swim
-- Fire on the brazier holds the grate up, water on the wheel holds the sluice up; only the other one can go through
+- Fire on the brazier holds the grate up, water on the wheel holds the sluice up; only the others can go through
+- Earth fills holes nobody else can cross and pushes round stones; a stone pushed into water becomes a bridge for everyone
 - Everything on the board is drawn by hand as SVG
-- Tap fire or water, then any square: it walks there by itself, or up to an ice or bush and melts or burns it
+- Tap a friend, then any square: it walks there by itself, or up to an ice, bush, hole or round stone and melts, burns, fills or pushes it
 - Soft dots show where the picked one can go; swipe to take a single step
 - Every obstacle on a level is needed, so there are no shortcuts
 - Nothing you do can make a level unwinnable

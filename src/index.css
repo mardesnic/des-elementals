@@ -31,6 +31,13 @@
   --glow-fire: #ffe066;
   --glow-water: #a5d8ff;
   --cloud: #f1f3f5;
+  --earth: #9c6b3f;
+  --earth-dark: #74492a;
+  --pit: #3d2b1f;
+  --boulder: #d9b48a;
+  --boulder-dark: #b08458;
+  --blossom: #f783ac;
+  --glow-earth: #b2f2bb;
   --danger: #e03131;
   --ring: #ffffff;
   --radius: 18px;
@@ -75,6 +82,13 @@
     --glow-fire: #b8860b;
     --glow-water: #1971c2;
     --cloud: #ced4da;
+    --earth: #8a5d35;
+    --earth-dark: #5f3c20;
+    --pit: #140d08;
+    --boulder: #b8956c;
+    --boulder-dark: #8c6a4c;
+    --blossom: #e64980;
+    --glow-earth: #2b8a3e;
     --danger: #c92a2a;
     --ring: #e8eaee;
   }
@@ -293,6 +307,15 @@ h2 {
   background: radial-gradient(var(--glow-water) 30%, var(--grass) 72%);
 }
 
+.tile--awake.tile--of-earth {
+  background: radial-gradient(var(--glow-earth) 30%, var(--grass) 72%);
+}
+
+/* A round stone pushed into water lies in it as a bridge. */
+.tile--bridge {
+  background: linear-gradient(var(--water), var(--water-deep));
+}
+
 .art-face {
   fill: var(--face);
   stroke: var(--face);
@@ -462,6 +485,59 @@ h2 {
 
 .art-roof-water {
   fill: var(--drop);
+}
+
+.art-roof-earth {
+  fill: var(--leaf);
+}
+
+.art-earth {
+  fill: var(--earth);
+}
+
+.art-earth-dark {
+  fill: var(--earth-dark);
+}
+
+.art-sprout {
+  stroke: var(--leaf-dark);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.art-pit {
+  fill: var(--pit);
+}
+
+.art-boulder {
+  fill: var(--boulder);
+}
+
+.art-boulder-dark {
+  fill: var(--boulder-dark);
+}
+
+.art-boulder-line {
+  fill: none;
+  stroke: var(--boulder-dark);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.art-shadow {
+  fill: rgb(0 0 0 / 0.15);
+}
+
+.art-trunk {
+  fill: var(--wood-dark);
+}
+
+.art-crown {
+  fill: var(--leaf);
+}
+
+.art-blossom {
+  fill: var(--blossom);
 }
 
 .art-sign {
@@ -654,7 +730,8 @@ h2 {
 
 /* In its temple, the sun or cloud floats above the roof. */
 .friend--on-fireTemple .friend__face,
-.friend--on-waterTemple .friend__face {
+.friend--on-waterTemple .friend__face,
+.friend--on-earthTemple .friend__face {
   scale: 0.95;
   translate: 0 -26%;
 }

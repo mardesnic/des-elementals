@@ -180,3 +180,68 @@ describe('solvers', () => {
     expect(tapsToWin(b, s)).toBeUndefined();
   });
 });
+
+describe('earth', () => {
+  it('fills a pit, which nobody else can cross', () => {
+    expect(outcome('earth', 'pit', false)).toEqual({ becomes: 'grass' });
+    expect(outcome('fire', 'pit', false)).toBe('blocked');
+    expect(outcome('water', 'pit', false)).toBe('blocked');
+    expect(outcome('earth', 'water', false)).toBe('blocked');
+    expect(outcome('earth', 'ice', false)).toBe('blocked');
+    expect(outcome('earth', 'bramble', false)).toBe('blocked');
+  });
+
+  it('pushes a round stone onto grass and walks after it', () => {
+    const { b, s } = setup('E@.');
+    const next = move(b, s, 'earth', 1);
+    expect(next.tiles).toEqual(['grass', 'grass', 'boulder']);
+    expect(next.at.earth).toBe(1);
+  });
+
+  it('pushes a round stone into water, where it is a bridge for all', () => {
+    const { b, s } = setup('E@~F');
+    const next = move(b, s, 'earth', 1);
+    expect(next.tiles[2]).toBe('bridge');
+    expect(move(b, next, 'fire', 2).at.fire).toBe(2);
+    // A bridge stays where it is.
+    expect(move(b, next, 'earth', 2).at.earth).toBe(2);
+    expect(move(b, next, 'earth', 2).tiles[2]).toBe('bridge');
+  });
+
+  it("can't push a stone into a rock, a friend, a temple or off the board", () => {
+    for (const rows of [['E@#'], ['E@F'], ['E@t'], ['E@'], ['E@i']]) {
+      const { b, s } = setup(...rows);
+      expect(move(b, s, 'earth', 1)).toBe(s);
+    }
+  });
+
+  it("doesn't push a stone at the end of a row onto the next row", () => {
+    const { b, s } = setup('.E@', '...');
+    expect(move(b, s, 'earth', 2)).toBe(s);
+  });
+
+  it('is the only one who pushes', () => {
+    const { b, s } = setup('F@.', 'W@.');
+    expect(move(b, s, 'fire', 1)).toBe(s);
+    expect(move(b, s, 'water', 4)).toBe(s);
+  });
+
+  it('goes through a grate fire holds up', () => {
+    const { b, s } = setup('FaE', '.A.');
+    const held = move(b, s, 'fire', 1);
+    const near = move(b, held, 'earth', 5);
+    expect(move(b, near, 'earth', 4).at.earth).toBe(4);
+    expect(move(b, move(b, s, 'earth', 5), 'earth', 4).at.earth).toBe(5);
+  });
+
+  it('wins only when all three are home', () => {
+    const { b, s } = setup('Ft', 'Ws', 'Ee');
+    expect(isWon(s)).toBe(false);
+    const fire = move(b, s, 'fire', 1);
+    const water = move(b, fire, 'water', 3);
+    expect(isWon(water)).toBe(false);
+    expect(isWon(move(b, water, 'earth', 5))).toBe(true);
+    expect(movesToWin(b, s)).toBe(3);
+    expect(tapsToWin(b, s)).toEqual({ taps: 3, switches: 2 });
+  });
+});

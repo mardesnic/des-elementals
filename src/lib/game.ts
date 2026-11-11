@@ -4,7 +4,6 @@ import {
   isWon,
   move,
   neighbours,
-  outcomeAt,
   parse,
   walks,
   type Element,
@@ -60,7 +59,8 @@ export function savedGame(game: Game | undefined): Game | undefined {
 export type Turn = { steps: Game[]; stuck?: Element };
 
 // What a tap on square i does. On someone, it picks them. Elsewhere, the
-// one picked walks there, or up to an ice or bramble there and changes it.
+// one picked walks there, or up to an ice, bramble or pit there and
+// changes it, or up to a round stone and pushes it.
 // If they can't, they shake; the other one never moves on its own.
 export function tap(
   game: Game,
@@ -124,16 +124,18 @@ function walkTo(
   const ways = walks(b, s, e);
   let path = ways.get(i);
   if (!path) {
-    // An ice or bramble: walk up to it, then into it to change it.
+    // An ice, bramble or pit, or a round stone: walk up to it, then into
+    // it to change or push it. Earth next to a stone pushes it straight on
+    // if it can, as staying put is the shortest way.
     const here = (n: number) => (n === from ? [] : ways.get(n));
+    const changes = (at: number) => {
+      const there = { ...s, at: { ...s.at, [e]: at } };
+      return move(b, there, e, i).tiles !== there.tiles;
+    };
     const nearest = neighbours(b, i)
       .map(here)
       .filter((p): p is number[] => !!p)
-      .filter((p) => {
-        const at = p.at(-1) ?? from;
-        const result = outcomeAt({ ...s, at: { ...s.at, [e]: at } }, e, i);
-        return typeof result === 'object';
-      })
+      .filter((p) => changes(p.at(-1) ?? from))
       .sort((p, q) => p.length - q.length)[0];
     if (!nearest) return undefined;
     path = [...nearest, i];

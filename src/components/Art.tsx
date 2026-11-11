@@ -13,6 +13,7 @@ const FLAME =
 const FLAME_CORE =
   'M50 92c-10 0-16-7-16-16 0-8 6-13 10-21 2 6 6 8 8 8 2-4 4-8 6-12 4 8 6 16 6 24 0 10-6 17-14 17z';
 const DROP = 'M50 6c13 21 31 39 31 59a31 31 0 0 1-62 0c0-20 18-38 31-59z';
+const LEAF = 'M50 6C82 26 86 64 50 94 14 64 18 26 50 6z';
 
 const Face = ({ y }: { y: number }) => (
   <g className='art-face'>
@@ -30,9 +31,47 @@ const SmallFlame = ({ x, y, size }: { x: number; y: number; size: number }) => (
   </g>
 );
 
-// `home` is for one standing in its own temple, where fire becomes the sun
-// and water a rain cloud.
+// `home` is for one standing in its own temple, where fire becomes the sun,
+// water a rain cloud and earth a tree in bloom.
 export function Friend({ element, home }: { element: Element; home: boolean }) {
+  if (home && element === 'earth')
+    return (
+      <Svg>
+        <path className='art-trunk' d='M44 92V60h12v32z' />
+        <circle className='art-crown' cx='50' cy='42' r='30' />
+        <circle className='art-crown' cx='26' cy='54' r='16' />
+        <circle className='art-crown' cx='74' cy='54' r='16' />
+        <g className='art-blossom'>
+          <circle cx='28' cy='34' r='5' />
+          <circle cx='72' cy='30' r='5' />
+          <circle cx='22' cy='60' r='4.5' />
+          <circle cx='80' cy='58' r='4.5' />
+          <circle cx='50' cy='16' r='5' />
+        </g>
+        <Face y={44} />
+      </Svg>
+    );
+  if (element === 'earth')
+    return (
+      <Svg>
+        <path className='art-sprout' d='M50 34V14' />
+        <path
+          className='art-leaf'
+          d='M50 20c-4-10-14-12-20-8 4 8 12 10 20 8z'
+        />
+        <path className='art-leaf' d='M50 16c4-10 14-12 20-8-4 8-12 10-20 8z' />
+        <path
+          className='art-earth'
+          d='M50 30c22 0 38 14 38 34 0 18-16 28-38 28S12 82 12 64c0-20 16-34 38-34z'
+        />
+        <g className='art-earth-dark'>
+          <circle cx='26' cy='74' r='4' />
+          <circle cx='76' cy='70' r='3.5' />
+          <circle cx='68' cy='44' r='3' />
+        </g>
+        <Face y={62} />
+      </Svg>
+    );
   if (home && element === 'fire')
     return (
       <Svg>
@@ -83,6 +122,12 @@ export function Friend({ element, home }: { element: Element; home: boolean }) {
   );
 }
 
+const SIGNS: Record<Element, string> = {
+  fire: FLAME,
+  water: DROP,
+  earth: LEAF,
+};
+
 // A small temple, its roof in its element's colour with its sign on top.
 const Temple = ({ element }: { element: Element }) => (
   <Svg>
@@ -96,12 +141,9 @@ const Temple = ({ element }: { element: Element }) => (
     />
     <rect className='art-stone' x='14' y='74' width='72' height='10' rx='3' />
     <path className='art-column' d='M27 46v28M50 46v28M73 46v28' />
-    <path
-      className={element === 'fire' ? 'art-roof-fire' : 'art-roof-water'}
-      d='M6 48L50 12l44 36z'
-    />
+    <path className={`art-roof-${element}`} d='M6 48L50 12l44 36z' />
     <g transform='translate(41 24) scale(0.18)'>
-      <path className='art-sign' d={element === 'fire' ? FLAME : DROP} />
+      <path className='art-sign' d={SIGNS[element]} />
     </g>
   </Svg>
 );
@@ -201,6 +243,48 @@ export function TileArt({
       return <Temple element='fire' />;
     case 'waterTemple':
       return <Temple element='water' />;
+    case 'earthTemple':
+      return <Temple element='earth' />;
+    case 'pit':
+      return (
+        <Svg>
+          <ellipse className='art-earth' cx='50' cy='54' rx='40' ry='30' />
+          <ellipse className='art-pit' cx='50' cy='58' rx='31' ry='22' />
+        </Svg>
+      );
+    case 'boulder':
+      return (
+        <Svg>
+          <ellipse className='art-shadow' cx='50' cy='88' rx='30' ry='6' />
+          <circle className='art-boulder' cx='50' cy='52' r='36' />
+          <path
+            className='art-boulder-line'
+            d='M24 34q26 22 52 0M18 58q32 20 64 0'
+          />
+          <ellipse
+            className='art-shine'
+            cx='36'
+            cy='32'
+            rx='9'
+            ry='5'
+            transform='rotate(-30 36 32)'
+          />
+        </Svg>
+      );
+    case 'bridge':
+      return (
+        <Svg>
+          <ellipse
+            className='art-boulder-dark'
+            cx='50'
+            cy='58'
+            rx='40'
+            ry='26'
+          />
+          <ellipse className='art-boulder' cx='50' cy='52' rx='38' ry='22' />
+          <path className='art-boulder-line' d='M28 50q22 10 44 0' />
+        </Svg>
+      );
     case 'brazier':
       return (
         <Svg>

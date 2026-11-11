@@ -16,7 +16,7 @@ import {
 import { LEVELS, worldOf } from './levels';
 
 // The first level with both fire and water.
-const first = () => newGame(LEVELS.find((l) => worldOf(l) === 'fireWater')!);
+const first = () => newGame(LEVELS.find((l) => worldOf(l) === 'water')!);
 const board = (g: Game) => boardOf(levelById(g.level)!);
 
 // A square far from everyone, that the active one can't walk to.
@@ -71,6 +71,19 @@ describe('tap', () => {
       s.tiles[s.at.fire!] === 'fireTemple' &&
         s.tiles[s.at.water!] === 'waterTemple'
     );
+  });
+
+  it('pushes a round stone straight on when earth is next to it', () => {
+    const level = { id: 'stone', rows: ['....', '.E@.', '....'] };
+    const game = { ...newGame(level), active: 'earth' as const };
+    const pushed = tap(game, 6, level).steps.at(-1)!;
+    expect(pushed.state.tiles[7]).toBe('boulder');
+    expect(pushed.state.at.earth).toBe(6);
+    // From afar, earth walks up to the stone first.
+    const far = { ...game, state: { ...game.state, at: { earth: 0 } } };
+    const steps = tap(far, 6, level).steps;
+    expect(steps.at(-1)!.state.tiles[6]).toBe('grass');
+    expect(steps.length).toBeGreaterThan(1);
   });
 
   it('wins when fire alone is in its temple', () => {

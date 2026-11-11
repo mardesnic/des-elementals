@@ -25,30 +25,39 @@ const en = {
   hints: {
     fire: 'Take fire to its temple, where it becomes the sun. Tap where it should go.',
     bramble: 'Fire can burn a thorny bush. Tap the bush!',
-    fireWater:
+    water:
       'Bring fire to the fire temple and water to the water temple. Tap one, then where it should go.',
+    earth:
+      'Here comes earth! It fills holes and has its own temple, where it grows into a tree.',
+    boulder:
+      'Earth can push a round stone. In water, the stone becomes a little bridge.',
   } satisfies Record<Hint, string>,
   undo: 'Undo',
   clear: 'Start over',
   solved: 'Well done!',
   together: {
     fire: 'The sun shines and the flowers grow!',
-    fireWater: 'The sun shines, the rain falls, and the flowers grow!',
+    water: 'The sun shines, the rain falls, and the flowers grow!',
+    earth: 'The sun shines, the rain falls, and the tree blooms!',
   } satisfies Record<World, string>,
   // After the last level of a world, for the one that comes next.
   meet: {
-    fireWater: 'The sun shines! Next, water joins fire.',
+    water: 'The sun shines! Next, water joins fire.',
+    earth: 'Sun and rain! Next, earth joins them.',
   } satisfies Record<Exclude<World, 'fire'>, string>,
   worlds: {
     fire: 'Fire',
-    fireWater: 'Fire and water',
+    water: 'Fire and water',
+    earth: 'Fire, water and earth',
   } satisfies Record<World, string>,
   next: 'Next level',
   finale: 'You did it all!',
-  finaleText: 'Sun and rain woke the whole garden, and a rainbow came out!',
+  finaleText:
+    'Sun, rain and earth woke the whole garden, and a rainbow came out!',
   elements: {
     fire: 'Fire',
     water: 'Water',
+    earth: 'Earth',
   } satisfies Record<Element, string>,
   tiles: {
     grass: 'Grass',
@@ -62,11 +71,16 @@ const en = {
     sluice: 'Sluice gate',
     fireTemple: 'Fire temple',
     waterTemple: 'Water temple',
+    earthTemple: 'Earth temple',
+    pit: 'Hole',
+    boulder: 'Round stone',
+    bridge: 'Stone bridge',
   } satisfies Record<Tile, string>,
   // A temple, brazier or wheel with its own element on it.
   awake: {
     fireTemple: 'the sun shines',
     waterTemple: 'rain falls',
+    earthTemple: 'the tree blooms',
     brazier: 'burning',
     wheel: 'turning',
   } satisfies Partial<Record<Tile, string>>,
@@ -99,29 +113,38 @@ const hr: Strings = {
   hints: {
     fire: 'Odvedi vatru do njezina hrama, gdje postaje sunce. Dodirni kamo treba ići.',
     bramble: 'Vatra može spaliti trnoviti grm. Dodirni grm!',
-    fireWater:
+    water:
       'Dovedi vatru do vatrenog hrama, a vodu do vodenog. Dodirni jednu, pa kamo treba ići.',
+    earth:
+      'Stiže zemlja! Ona zatrpava rupe i ima svoj hram, gdje izraste u drvo.',
+    boulder:
+      'Zemlja može gurnuti okrugli kamen. U vodi kamen postane mali most.',
   },
   undo: 'Poništi',
   clear: 'Ispočetka',
   solved: 'Bravo!',
   together: {
     fire: 'Sunce sja, a cvijeće raste!',
-    fireWater: 'Sunce sja, kiša pada, a cvijeće raste!',
+    water: 'Sunce sja, kiša pada, a cvijeće raste!',
+    earth: 'Sunce sja, kiša pada, a drvo cvjeta!',
   },
   meet: {
-    fireWater: 'Sunce sja! Sada vatri dolazi voda.',
+    water: 'Sunce sja! Sada vatri dolazi voda.',
+    earth: 'Sunce i kiša! Sada im dolazi zemlja.',
   },
   worlds: {
     fire: 'Vatra',
-    fireWater: 'Vatra i voda',
+    water: 'Vatra i voda',
+    earth: 'Vatra, voda i zemlja',
   },
   next: 'Sljedeća razina',
   finale: 'Sve je riješeno!',
-  finaleText: 'Sunce i kiša probudili su cijeli vrt, a izašla je i duga!',
+  finaleText:
+    'Sunce, kiša i zemlja probudili su cijeli vrt, a izašla je i duga!',
   elements: {
     fire: 'Vatra',
     water: 'Voda',
+    earth: 'Zemlja',
   },
   tiles: {
     grass: 'Trava',
@@ -135,10 +158,15 @@ const hr: Strings = {
     sluice: 'Ustava',
     fireTemple: 'Vatreni hram',
     waterTemple: 'Vodeni hram',
+    earthTemple: 'Zemljani hram',
+    pit: 'Rupa',
+    boulder: 'Okrugli kamen',
+    bridge: 'Kameni most',
   },
   awake: {
     fireTemple: 'sunce sja',
     waterTemple: 'pada kiša',
+    earthTemple: 'drvo cvjeta',
     brazier: 'gori',
     wheel: 'okreće se',
   },

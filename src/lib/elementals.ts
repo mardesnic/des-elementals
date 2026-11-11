@@ -1,8 +1,8 @@
 // The rules: a few element friends on a small board of tiles, who win when
-// each of them reaches its own temple: there fire becomes the sun and water
-// a rain cloud.
+// each of them reaches its own temple: there fire becomes the sun, water
+// a rain cloud and earth a tree in bloom.
 
-export const ELEMENTS = ['fire', 'water'] as const;
+export const ELEMENTS = ['fire', 'water', 'earth'] as const;
 export type Element = (typeof ELEMENTS)[number];
 
 // One letter a tile in a level's map.
@@ -18,6 +18,10 @@ export const TILES = {
   B: 'sluice',
   t: 'fireTemple',
   s: 'waterTemple',
+  o: 'pit',
+  '@': 'boulder',
+  '=': 'bridge',
+  e: 'earthTemple',
 } as const;
 export type Tile = (typeof TILES)[keyof typeof TILES];
 
@@ -27,6 +31,7 @@ export type Tile = (typeof TILES)[keyof typeof TILES];
 const HOME: Partial<Record<Tile, Element>> = {
   fireTemple: 'fire',
   waterTemple: 'water',
+  earthTemple: 'earth',
 };
 const HOLDER: Partial<Record<Tile, Element>> = {
   brazier: 'fire',
@@ -38,7 +43,7 @@ export const ownerOf = (t: Tile) => HOME[t] ?? HOLDER[t] ?? GATE[t];
 export const isGate = (t: Tile) => GATE[t] !== undefined;
 
 // Where each element starts, written on grass.
-const STARTS: Record<string, Element> = { F: 'fire', W: 'water' };
+const STARTS: Record<string, Element> = { F: 'fire', W: 'water', E: 'earth' };
 
 export type Level = { id: string; rows: string[] };
 
@@ -117,7 +122,8 @@ export function shownOpen(s: State, i: number): boolean {
 }
 
 // What happens when an element moves onto a tile: it steps on, can't go,
-// or changes the tile and stays where it is.
+// or changes the tile and stays where it is. A round stone that earth
+// pushes is worked out in `move`, which knows the way it goes.
 export type Outcome = 'step' | 'blocked' | { becomes: Tile };
 
 // `open` says whether the tile, if it is a gate, is held up.
@@ -126,13 +132,16 @@ export function outcome(e: Element, tile: Tile, open: boolean): Outcome {
     case 'grass':
     case 'fireTemple':
     case 'waterTemple':
+    case 'earthTemple':
     case 'brazier':
     case 'wheel':
+    case 'bridge':
       return 'step';
     case 'grate':
     case 'sluice':
       return open ? 'step' : 'blocked';
     case 'rock':
+    case 'boulder':
       return 'blocked';
     case 'water':
       return e === 'water' ? 'step' : 'blocked';
@@ -140,7 +149,32 @@ export function outcome(e: Element, tile: Tile, open: boolean): Outcome {
       return e === 'fire' ? { becomes: 'water' } : 'blocked';
     case 'bramble':
       return e === 'fire' ? { becomes: 'grass' } : 'blocked';
+    case 'pit':
+      return e === 'earth' ? { becomes: 'grass' } : 'blocked';
   }
+}
+
+// Where a round stone on square `to` goes when `e` on `from` pushes it,
+// or undefined if it can't: only earth pushes, one square on, onto empty
+// grass, or into water where it makes a bridge.
+export function pushTo(
+  b: Board,
+  s: State,
+  e: Element,
+  from: number,
+  to: number
+): number | undefined {
+  if (e !== 'earth' || s.tiles[to] !== 'boulder') return undefined;
+  const dx = (to % b.width) - (from % b.width);
+  const dy = Math.floor(to / b.width) - Math.floor(from / b.width);
+  if (Math.abs(dx) + Math.abs(dy) !== 1) return undefined;
+  const x = (to % b.width) + dx;
+  const y = Math.floor(to / b.width) + dy;
+  if (x < 0 || y < 0 || x >= b.width || y >= b.height) return undefined;
+  const beyond = y * b.width + x;
+  if (elementsIn(s).some((o) => s.at[o] === beyond)) return undefined;
+  const tile = s.tiles[beyond];
+  return tile === 'grass' || tile === 'water' ? beyond : undefined;
 }
 
 // What `e` moving onto square `to` would do, ignoring whether it is next
@@ -157,6 +191,13 @@ export function outcomeAt(s: State, e: Element, to: number): Outcome {
 export function move(b: Board, s: State, e: Element, to: number): State {
   const from = s.at[e];
   if (from === undefined || !isNextTo(b, from, to)) return s;
+  const beyond = pushTo(b, s, e, from, to);
+  if (beyond !== undefined) {
+    const tiles = s.tiles.slice();
+    tiles[beyond] = tiles[beyond] === 'water' ? 'bridge' : 'boulder';
+    tiles[to] = 'grass';
+    return { tiles, at: { ...s.at, [e]: to } };
+  }
   const result = outcomeAt(s, e, to);
   if (result === 'blocked') return s;
   if (result === 'step') return { ...s, at: { ...s.at, [e]: to } };
