@@ -69,7 +69,7 @@ const HOME_OF: Record<Element, Tile> = {
 };
 // Whether `e` may stand on square i with `o` already there: only the two
 // people, together in their temple.
-const together = (s: State, e: Element, o: Element, i: number) =>
+export const together = (s: State, e: Element, o: Element, i: number) =>
   s.tiles[i] === 'heartTemple' &&
   e !== o &&
   [e, o].every((p) => PEOPLE.includes(p));

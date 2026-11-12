@@ -43,7 +43,8 @@ export function Friend({ element, home }: { element: Element; home: boolean }) {
     return (
       <Svg>
         <g className='art-gust'>
-          <path d='M76 40h18M80 54h16M76 68h18' />
+          <path d='M68 42h26a8 8 0 1 0-8-8' />
+          <path d='M72 62h32a8 8 0 1 1-8 8' />
         </g>
         <path
           className='art-breeze'

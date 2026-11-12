@@ -49,28 +49,13 @@ type Slot = {
   stones?: number;
 };
 
-// Fire alone: walking to its temple, then burning coals on the way.
+// Fire alone, just three levels: walking to its temple, then burning coal
+// on the way.
 // Ice is left out: melted, it only blocks fire.
 const FIRE: Slot[] = [
   { size: [4, 4], kinds: [], taps: [1, 1], switches: 0, alone: true },
   { size: [4, 4], kinds: ['coal'], taps: [2, 2], switches: 0, alone: true },
   { size: [5, 5], kinds: ['coal'], taps: [3, 3], switches: 0, alone: true },
-  {
-    size: [5, 5],
-    kinds: ['coal'],
-    taps: [3, 4],
-    switches: 0,
-    alone: true,
-    coals: 3,
-  },
-  {
-    size: [6, 6],
-    kinds: ['coal'],
-    taps: [4, 4],
-    switches: 0,
-    alone: true,
-    coals: 3,
-  },
 ];
 
 // Fire, water and earth, all three from the start: earth fills pits and
@@ -224,10 +209,10 @@ const AIR: Slot[] = [
 // temple. They can't do anything special; they are just in the way.
 const PEOPLE: Slot[] = [
   {
-    size: [5, 5],
+    size: [6, 6],
     kinds: [],
-    taps: [7, 12],
-    switches: 6,
+    taps: [12, 18],
+    switches: 8,
     earth: true,
     air: true,
     people: true,
@@ -236,7 +221,7 @@ const PEOPLE: Slot[] = [
 
 // The most states a level may have, so the tests can check it with the
 // game's own rules in time.
-const LIMIT = 300_000;
+const LIMIT = 2_000_000;
 
 // Fire and water. Easiest first: one new thing at a time, then mixed. Water with ice
 // never made a good board, so those mixes are left out.
@@ -334,7 +319,7 @@ function randomBoard(slot: Slot, rnd: () => number): string[] {
     throw new Full();
   };
 
-  const rock = (slot.people ? 0.35 : 0.15) + rnd() * 0.2;
+  const rock = (slot.people ? 0.3 : 0.15) + rnd() * 0.2;
   for (let i = 0; i < cells.length; i++) if (rnd() < rock) cells[i] = '#';
 
   if (slot.kinds.includes('water')) {
@@ -533,7 +518,7 @@ const WORLDS = {
   // With four friends a board is slow to check, so each slot is made by a
   // process of its own, all at once.
   air: { slots: AIR, seed: 20261114, intro: 3, tries: 10000, perSlot: true },
-  people: { slots: PEOPLE, seed: 20261115, intro: 1, tries: 6000 },
+  people: { slots: PEOPLE, seed: 20261115, intro: 1, tries: 3000 },
 };
 type World = keyof typeof WORLDS;
 

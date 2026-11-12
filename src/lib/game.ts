@@ -5,6 +5,7 @@ import {
   move,
   neighbours,
   parse,
+  together,
   walks,
   type Element,
   type Level,
@@ -70,7 +71,16 @@ export function tap(
   if (game.won) return { steps: [] };
   const s = game.state;
   const everyone = elementsIn(s);
-  const there = everyone.find((e) => s.at[e] === i);
+  // With both people in their temple, a tap there picks the one not
+  // picked yet.
+  const on = everyone.filter((e) => s.at[e] === i);
+  const there = on.find((e) => e !== game.active) ?? on[0];
+  // One person in the heart temple: the other one, picked, goes in to
+  // them, if it can get there.
+  if (there && s.at[game.active] !== i && together(s, game.active, there, i)) {
+    const steps = walkTo(game, game.active, i, level);
+    if (steps) return { steps };
+  }
   if (there)
     return {
       steps: there === game.active ? [] : [{ ...game, active: there }],

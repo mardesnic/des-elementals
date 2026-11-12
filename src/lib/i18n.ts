@@ -39,21 +39,6 @@ const en = {
   undo: 'Undo',
   clear: 'Start over',
   solved: 'Well done!',
-  together: {
-    fire: 'The sun shines!',
-    water: 'The sun shines, the rain falls, and a rainbow comes out!',
-    earth: 'Sun, rain and a green tree, and the flowers grow!',
-    air: 'Sun, rain, a tree and a breeze, and the birds fly in!',
-    people: 'They met, and little houses came up!',
-  } satisfies Record<World, string>,
-  // After the last level of a world, for the one that comes next.
-  meet: {
-    water: 'The sun shines! Next, water joins fire.',
-    earth: 'Sun and rain! Next, earth joins them.',
-    air: 'Sun, rain and a tree! Next, air joins them.',
-    people:
-      'Sun, rain, a tree and a breeze! Last of all, two people want to meet.',
-  } satisfies Record<Exclude<World, 'fire'>, string>,
   worlds: {
     fire: 'Fire',
     water: 'Fire and water',
@@ -63,8 +48,6 @@ const en = {
   } satisfies Record<World, string>,
   next: 'Next level',
   finale: 'You did it all!',
-  finaleText:
-    'Sun, rain, earth and wind woke the whole garden, and the two of them made a home there!',
   elements: {
     fire: 'Fire',
     water: 'Water',
@@ -148,20 +131,6 @@ const hr: Strings = {
   undo: 'Poništi',
   clear: 'Ispočetka',
   solved: 'Bravo!',
-  together: {
-    fire: 'Sunce sja!',
-    water: 'Sunce sja, kiša pada, a izašla je duga!',
-    earth: 'Sunce, kiša i zeleno drvo, a cvijeće raste!',
-    air: 'Sunce, kiša, drvo i povjetarac, a dolijeću ptice!',
-    people: 'Našli su se, a niknule su i kućice!',
-  },
-  meet: {
-    water: 'Sunce sja! Sada vatri dolazi voda.',
-    earth: 'Sunce i kiša! Sada im dolazi zemlja.',
-    air: 'Sunce, kiša i drvo! Sada im dolazi zrak.',
-    people:
-      'Sunce, kiša, drvo i povjetarac! Na kraju se dvoje ljudi želi naći.',
-  },
   worlds: {
     fire: 'Vatra',
     water: 'Vatra i voda',
@@ -171,8 +140,6 @@ const hr: Strings = {
   },
   next: 'Sljedeća razina',
   finale: 'Sve je riješeno!',
-  finaleText:
-    'Sunce, kiša, zemlja i vjetar probudili su cijeli vrt, a njih dvoje tu su si napravili dom!',
   elements: {
     fire: 'Vatra',
     water: 'Voda',

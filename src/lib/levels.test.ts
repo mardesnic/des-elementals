@@ -15,7 +15,7 @@ import {
   type Level,
   type State,
 } from './elementals';
-import { LEVELS, WORLDS, hintFor, worldAfter, worldOf } from './levels';
+import { LEVELS, WORLDS, hintFor, worldOf } from './levels';
 
 // How many reachable positions can no longer be won. Walks every move from
 // the start, then works back from the wins.
@@ -53,7 +53,7 @@ function deadEnds(level: Level): number {
 
 // With all four friends, checking a level with the game's own rules takes
 // a while.
-const SLOW = 60_000;
+const SLOW = 300_000;
 
 describe('levels', () => {
   it('are there', () => {
@@ -102,20 +102,15 @@ describe('levels', () => {
     const both = LEVELS.findIndex((l) => worldOf(l) === 'water');
     expect(hintFor(LEVELS[fire])).toBe('fire');
     expect(hintFor(LEVELS[both])).toBe('water');
-    expect(worldAfter(LEVELS[both - 1])).toBe('water');
-    expect(worldAfter(LEVELS[both])).toBeUndefined();
-    expect(worldAfter(LEVELS.at(-1)!)).toBeUndefined();
     const coal = LEVELS.findIndex((l) => l.rows.join('').includes('*'));
     expect(hintFor(LEVELS[coal])).toBe('coal');
     const earth = LEVELS.findIndex((l) => worldOf(l) === 'earth');
     expect(hintFor(LEVELS[earth])).toBe('earth');
-    expect(worldAfter(LEVELS[earth - 1])).toBe('earth');
     const stone = LEVELS.findIndex((l) => l.rows.join('').includes('@'));
     expect(worldOf(LEVELS[stone])).toBe('earth');
     expect(hintFor(LEVELS[stone])).toBe('boulder');
     const air = LEVELS.findIndex((l) => worldOf(l) === 'air');
     expect(hintFor(LEVELS[air])).toBe('air');
-    expect(worldAfter(LEVELS[air - 1])).toBe('air');
     const vane = LEVELS.findIndex((l) => l.rows.join('').includes('v'));
     expect(worldOf(LEVELS[vane])).toBe('air');
     expect(hintFor(LEVELS[vane])).toBe('vane');

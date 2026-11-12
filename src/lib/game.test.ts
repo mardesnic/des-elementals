@@ -130,6 +130,18 @@ describe('tap on small boards', () => {
     expect(go(2)).toMatchObject({ steps: [], stuck: 'air' });
   });
 
+  it('takes the picked person into the heart temple to the other one', () => {
+    const { go } = play(['Mh.L', 'F..t']);
+    go(0); // pick the man
+    go(1); // he walks into the temple
+    go(3); // pick the woman
+    const { steps } = go(1);
+    expect(steps.map((g) => g.state.at.woman)).toEqual([2, 1]);
+    // With both in, a tap there picks the one not picked yet.
+    expect(go(1).steps[0].active).toBe('man');
+    expect(go(1).steps[0].active).toBe('woman');
+  });
+
   it('walks up to ice far away and melts it', () => {
     const { go } = play(['F..i.W', 'ts####']);
     const { steps, game } = go(3);

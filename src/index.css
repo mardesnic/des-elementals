@@ -41,6 +41,8 @@
   --air-dark: #15aabf;
   --glow-air: #c5f6fa;
   --breeze: #e3fafc;
+  --gust: #1098ad;
+  --dot: #2b8a3e;
   --heart: #f06595;
   --glow-heart: #ffdeeb;
   --skin: #ffd8a8;
@@ -101,6 +103,8 @@
     --air-dark: #0c8599;
     --glow-air: #0b7285;
     --breeze: #c5f6fa;
+    --gust: #c5f6fa;
+    --dot: #8ce99a;
     --heart: #e64980;
     --glow-heart: #a61e4d;
     --skin: #f4c48e;
@@ -296,14 +300,10 @@ h2 {
   overflow: visible;
 }
 
+/* Plain water with its waves; no spot of light, which looked like the
+   dot for a square to walk to. */
 .tile--water {
-  background:
-    radial-gradient(
-      circle at 30% 35%,
-      rgb(255 255 255 / 0.35) 0 8%,
-      transparent 9%
-    ),
-    linear-gradient(var(--water), var(--water-deep));
+  background: linear-gradient(var(--water), var(--water-deep));
 }
 
 .tile--ice {
@@ -644,16 +644,21 @@ h2 {
 }
 
 .art-gust {
-  stroke: var(--air-dark);
-  stroke-width: 5;
+  stroke: var(--gust);
+  stroke-width: 8;
+  fill: none;
   stroke-linecap: round;
   animation: gust 1s ease-in-out infinite;
 }
 
 @keyframes gust {
-  50% {
-    transform: translateX(5px);
-    opacity: 0.4;
+  0% {
+    transform: translateX(-6px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(10px);
+    opacity: 0.2;
   }
 }
 
@@ -830,7 +835,7 @@ h2 {
 
 .bird {
   position: absolute;
-  left: 0;
+  left: -25%;
   width: 18%;
   animation: fly 4s ease-in-out 0.6s both;
 }
@@ -869,12 +874,15 @@ h2 {
   fill: #1a1d23;
 }
 
+/* Across the board and out the other side. */
 @keyframes fly {
   from {
-    transform: translate(-110%, 30%);
+    left: -25%;
+    transform: translateY(30%);
   }
   to {
-    transform: translate(620%, -20%);
+    left: 110%;
+    transform: translateY(-20%);
   }
 }
 
@@ -953,10 +961,11 @@ h2 {
 .tile--reach::before {
   content: '';
   position: absolute;
-  width: 16%;
-  height: 16%;
+  width: 22%;
+  height: 22%;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  background: var(--dot);
+  opacity: 0.45;
 }
 
 @keyframes appear {
@@ -1018,7 +1027,7 @@ h2 {
 
 /* The one that moves next has a ring and bobs gently. */
 .friend--active .friend__face {
-  box-shadow: 0 0 0 3px var(--accent);
+  box-shadow: 0 0 0 3px var(--dot);
   animation: bob 1.4s ease-in-out infinite;
 }
 
@@ -1105,12 +1114,6 @@ h2 {
 
 .solved h2 {
   font-size: 1.6rem;
-}
-
-.solved__text {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--muted);
 }
 
 .solved__actions {

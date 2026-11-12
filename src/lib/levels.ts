@@ -31,12 +31,6 @@ export function worldOf(level: Level): World {
 export const levelsOf = (world: World) =>
   LEVELS.filter((l) => worldOf(l) === world);
 
-// The world that starts after this level, if this is its world's last.
-export function worldAfter(level: Level): World | undefined {
-  const next = LEVELS[LEVELS.indexOf(level) + 1];
-  return next && worldOf(next) !== worldOf(level) ? worldOf(next) : undefined;
-}
-
 // Things shown for the first time on a level, with their letters.
 const NEW = { coal: '*', boulder: '@', vane: 'v' } as const;
 
