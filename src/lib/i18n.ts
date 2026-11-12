@@ -17,7 +17,7 @@ export function detectLang(): Lang {
 }
 
 const en = {
-  title: 'Elementals',
+  title: 'Elements',
   settings: 'Settings',
   levels: 'Levels',
   done: 'Done',
@@ -96,7 +96,7 @@ const en = {
 export type Strings = typeof en;
 
 const hr: Strings = {
-  title: 'Elementals',
+  title: 'Elementi',
   settings: 'Postavke',
   levels: 'Razine',
   done: 'Gotovo',

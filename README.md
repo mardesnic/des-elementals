@@ -1,4 +1,4 @@
-# Elementals
+# Elements
 
 A free puzzle game for young kids that works offline. You guide little element friends, first fire on its own, then fire and water, then fire, water and earth, and last all four with air, across a small board until each reaches its own temple: there fire becomes the sun, water a rain cloud, earth a green tree and air a cloud that blows; the more friends, the bigger the party, with a rainbow, flowers and birds. Each one can do something the others can't: fire melts ice, burns away piles of coal and keeps a brazier burning to raise a grate; water swims and turns a water wheel to raise a sluice gate; earth fills holes and pushes round stones, which become little bridges in water; air flies over water and holes, but once it starts it keeps going until something stops it, and it spins a weather vane to raise a wind gate. Helping one clears the way for the others.
 

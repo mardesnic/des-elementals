@@ -15,8 +15,8 @@ export default defineConfig({
         // A fixed id of its own, so a phone never mixes it up with an earlier
         // install or with the other games on this site.
         id: 'des-elementals',
-        name: 'Elementals',
-        short_name: 'Elementals',
+        name: 'Elements',
+        short_name: 'Elements',
         description: 'A puzzle for kids: help the elements find each other',
         theme_color: '#6741d9',
         background_color: '#f4f5f7',
