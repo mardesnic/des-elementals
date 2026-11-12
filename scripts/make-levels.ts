@@ -211,8 +211,8 @@ const PEOPLE: Slot[] = [
   {
     size: [6, 6],
     kinds: [],
-    taps: [12, 18],
-    switches: 8,
+    taps: [11, 18],
+    switches: 6,
     earth: true,
     air: true,
     people: true,
@@ -518,7 +518,7 @@ const WORLDS = {
   // With four friends a board is slow to check, so each slot is made by a
   // process of its own, all at once.
   air: { slots: AIR, seed: 20261114, intro: 3, tries: 10000, perSlot: true },
-  people: { slots: PEOPLE, seed: 20261115, intro: 1, tries: 3000 },
+  people: { slots: PEOPLE, seed: 20261123, intro: 1, tries: 1500 },
 };
 type World = keyof typeof WORLDS;
 
