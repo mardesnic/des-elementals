@@ -38,7 +38,7 @@ const en = {
   together: {
     fire: 'The sun shines and the flowers grow!',
     water: 'The sun shines, the rain falls, and the flowers grow!',
-    earth: 'The sun shines, the rain falls, and the tree blooms!',
+    earth: 'The sun shines, the rain falls, and the tree grows green!',
   } satisfies Record<World, string>,
   // After the last level of a world, for the one that comes next.
   meet: {
@@ -80,7 +80,7 @@ const en = {
   awake: {
     fireTemple: 'the sun shines',
     waterTemple: 'rain falls',
-    earthTemple: 'the tree blooms',
+    earthTemple: 'the tree grows green',
     brazier: 'burning',
     wheel: 'turning',
   } satisfies Partial<Record<Tile, string>>,
@@ -126,7 +126,7 @@ const hr: Strings = {
   together: {
     fire: 'Sunce sja, a cvijeće raste!',
     water: 'Sunce sja, kiša pada, a cvijeće raste!',
-    earth: 'Sunce sja, kiša pada, a drvo cvjeta!',
+    earth: 'Sunce sja, kiša pada, a drvo zeleni!',
   },
   meet: {
     water: 'Sunce sja! Sada vatri dolazi voda.',
@@ -166,7 +166,7 @@ const hr: Strings = {
   awake: {
     fireTemple: 'sunce sja',
     waterTemple: 'pada kiša',
-    earthTemple: 'drvo cvjeta',
+    earthTemple: 'drvo zeleni',
     brazier: 'gori',
     wheel: 'okreće se',
   },

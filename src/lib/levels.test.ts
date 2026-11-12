@@ -141,6 +141,19 @@ describe('levels', () => {
     }
   });
 
+  // Where there are water and a round stone, the stone has to become a
+  // bridge.
+  it.each(
+    LEVELS.filter((l) => /~/.test(l.rows.join('')) && /@/.test(l.rows.join('')))
+  )('$id needs a bridge', (level) =>
+    expect(solvable(level.rows, false)).toBe(false)
+  );
+
+  it('have several levels with a bridge', () => {
+    const bridges = LEVELS.filter((l) => /~[^]*@|@[^]*~/.test(l.rows.join('')));
+    expect(bridges.length).toBeGreaterThanOrEqual(3);
+  });
+
   // No way to lose: whatever a kid does, the level can still be won.
   it.each(LEVELS)('$id has no dead ends', (level) => {
     expect(deadEnds(level)).toBe(0);

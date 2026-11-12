@@ -36,7 +36,6 @@
   --pit: #3d2b1f;
   --boulder: #d9b48a;
   --boulder-dark: #b08458;
-  --blossom: #f783ac;
   --glow-earth: #b2f2bb;
   --danger: #e03131;
   --ring: #ffffff;
@@ -87,7 +86,6 @@
     --pit: #140d08;
     --boulder: #b8956c;
     --boulder-dark: #8c6a4c;
-    --blossom: #e64980;
     --glow-earth: #2b8a3e;
     --danger: #c92a2a;
     --ring: #e8eaee;
@@ -534,10 +532,6 @@ h2 {
 
 .art-crown {
   fill: var(--leaf);
-}
-
-.art-blossom {
-  fill: var(--blossom);
 }
 
 .art-sign {

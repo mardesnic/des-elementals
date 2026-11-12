@@ -1,6 +1,6 @@
 // The rules: a few element friends on a small board of tiles, who win when
 // each of them reaches its own temple: there fire becomes the sun, water
-// a rain cloud and earth a tree in bloom.
+// a rain cloud and earth a green tree.
 
 export const ELEMENTS = ['fire', 'water', 'earth'] as const;
 export type Element = (typeof ELEMENTS)[number];

@@ -69,9 +69,11 @@ type Board = {
   start: number[];
   // How many states there could be.
   size: number;
+  // Whether a stone pushed into water makes a bridge, or can't go there.
+  bridges: boolean;
 };
 
-function load(rows: string[]): Board {
+function load(rows: string[], bridges = true): Board {
   const w = rows[0].length;
   const flat = rows.join('');
   const n = flat.length;
@@ -116,6 +118,7 @@ function load(rows: string[]): Board {
     len: start.length,
     start,
     size,
+    bridges,
   };
 }
 
@@ -247,7 +250,7 @@ function change(
   const beyond = y * b.w + x;
   if (isOn(b, st, beyond)) return false;
   const there = tileAt(b, st, beyond);
-  if (there !== GRASS && there !== WATER) return false;
+  if (there !== GRASS && !(there === WATER && b.bridges)) return false;
   out[b.slot[EARTH]] = i;
   for (let j = b.len - b.stones; j < b.len; j++)
     if (out[j] === i) out[j] = beyond;
@@ -311,9 +314,10 @@ function reachable(b: Board, toWin = false) {
   return { data, count, index, found };
 }
 
-// Whether the level can be won, one step at a time.
-export function solvable(rows: string[]): boolean {
-  const b = load(rows);
+// Whether the level can be won, one step at a time; with `bridges` false,
+// without ever pushing a stone into water.
+export function solvable(rows: string[], bridges = true): boolean {
+  const b = load(rows, bridges);
   return b.kinds.length > 0 && reachable(b, true).found;
 }
 

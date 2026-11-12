@@ -60,4 +60,11 @@ describe('solver', () => {
     expect(solvable(['E@~e', '#..#'])).toBe(true);
     expect(noDeadEnds(['.E.#', '.@~e', '#..#'])).toBe(false);
   });
+
+  it('can leave out bridges, to tell if a level needs one', () => {
+    expect(solvable(['E@~e'])).toBe(true);
+    expect(solvable(['E@~e'], false)).toBe(false);
+    expect(solvable(['E@.e'], false)).toBe(false);
+    expect(solvable(['E.e@'], false)).toBe(true);
+  });
 });

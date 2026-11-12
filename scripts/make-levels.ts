@@ -61,7 +61,8 @@ const FIRE: Slot[] = [
 ];
 
 // Fire, water and earth, all three from the start: earth fills pits and
-// pushes round stones, which make a bridge in water.
+// pushes round stones, which make a bridge in water. Wherever there are
+// water and a stone, a bridge is needed.
 const EARTH: Slot[] = [
   { size: [5, 5], kinds: ['pit'], taps: [3, 6], switches: 2, earth: true },
   { size: [5, 5], kinds: ['boulder'], taps: [3, 6], switches: 2, earth: true },
@@ -109,7 +110,21 @@ const EARTH: Slot[] = [
   },
   {
     size: [6, 6],
+    kinds: ['water', 'boulder', 'bramble'],
+    taps: [4, 8],
+    switches: 3,
+    earth: true,
+  },
+  {
+    size: [6, 6],
     kinds: ['pit', 'boulder'],
+    taps: [5, 9],
+    switches: 3,
+    earth: true,
+  },
+  {
+    size: [6, 6],
+    kinds: ['water', 'boulder', 'pit'],
     taps: [5, 9],
     switches: 3,
     earth: true,
@@ -287,6 +302,13 @@ function allNeeded(rows: string[], slot: Slot): boolean {
   if (
     slot.kinds.includes('water') &&
     solvable(replace(rows, (c) => c === '~', '#'))
+  )
+    return false;
+  // With water and a round stone, the stone has to become a bridge.
+  if (
+    slot.kinds.includes('water') &&
+    slot.kinds.includes('boulder') &&
+    solvable(rows, false)
   )
     return false;
   return true;

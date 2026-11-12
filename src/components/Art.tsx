@@ -32,21 +32,21 @@ const SmallFlame = ({ x, y, size }: { x: number; y: number; size: number }) => (
 );
 
 // `home` is for one standing in its own temple, where fire becomes the sun,
-// water a rain cloud and earth a tree in bloom.
+// water a rain cloud and earth a green tree.
 export function Friend({ element, home }: { element: Element; home: boolean }) {
   if (home && element === 'earth')
     return (
       <Svg>
         <path className='art-trunk' d='M44 92V60h12v32z' />
-        <circle className='art-crown' cx='50' cy='42' r='30' />
-        <circle className='art-crown' cx='26' cy='54' r='16' />
-        <circle className='art-crown' cx='74' cy='54' r='16' />
-        <g className='art-blossom'>
-          <circle cx='28' cy='34' r='5' />
-          <circle cx='72' cy='30' r='5' />
-          <circle cx='22' cy='60' r='4.5' />
-          <circle cx='80' cy='58' r='4.5' />
-          <circle cx='50' cy='16' r='5' />
+        <g className='art-leaf-dark'>
+          <circle cx='50' cy='46' r='30' />
+          <circle cx='26' cy='58' r='16' />
+          <circle cx='74' cy='58' r='16' />
+        </g>
+        <g className='art-crown'>
+          <circle cx='50' cy='42' r='28' />
+          <circle cx='26' cy='54' r='14' />
+          <circle cx='74' cy='54' r='14' />
         </g>
         <Face y={44} />
       </Svg>
@@ -274,15 +274,26 @@ export function TileArt({
     case 'bridge':
       return (
         <Svg>
-          <ellipse
+          <rect
             className='art-boulder-dark'
-            cx='50'
-            cy='58'
-            rx='40'
-            ry='26'
+            x='8'
+            y='12'
+            width='84'
+            height='82'
+            rx='8'
           />
-          <ellipse className='art-boulder' cx='50' cy='52' rx='38' ry='22' />
-          <path className='art-boulder-line' d='M28 50q22 10 44 0' />
+          <rect
+            className='art-boulder'
+            x='8'
+            y='6'
+            width='84'
+            height='82'
+            rx='8'
+          />
+          <path
+            className='art-boulder-line'
+            d='M8 33h84M8 61h84M40 6v27M66 33v28M34 61v27M72 61v27'
+          />
         </Svg>
       );
     case 'brazier':
