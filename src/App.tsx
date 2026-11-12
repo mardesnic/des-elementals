@@ -175,10 +175,11 @@ export default function App() {
             </>
           ) : (
             <button
-              className='button button--small'
+              className='button button--small button--icon'
               onClick={() => setView('play')}
+              aria-label={t.close}
             >
-              {t.done}
+              <Icon name='close' />
             </button>
           )}
         </div>
