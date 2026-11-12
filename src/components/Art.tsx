@@ -1,6 +1,6 @@
 // Every picture on the board, drawn on a 100 × 100 square. Colours come
 // from classes in index.css, so light and dark mode both work.
-import type { Element, Tile } from '../lib/elementals';
+import type { Element, Tile } from '../lib/elements';
 
 const Svg = ({ children }: { children: React.ReactNode }) => (
   <svg className='art' viewBox='0 0 100 100' aria-hidden='true'>

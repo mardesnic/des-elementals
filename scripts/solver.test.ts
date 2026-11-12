@@ -6,7 +6,7 @@ import {
   parse,
   tapsToWin,
   type Level,
-} from '../src/lib/elementals';
+} from '../src/lib/elements';
 import { noDeadEnds, solvable, taps } from './solver';
 
 // The game's own rules, slow but plain, to check the fast solver by.

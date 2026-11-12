@@ -10,7 +10,7 @@ import {
   type Element,
   type Level,
   type State,
-} from '../lib/elementals';
+} from '../lib/elements';
 import type { Strings } from '../lib/i18n';
 import type { World } from '../lib/levels';
 import { WORLDS } from '../lib/levels';

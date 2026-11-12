@@ -6,7 +6,7 @@ import { Confetti } from './components/Confetti';
 import { Icon } from './components/Icon';
 import { Levels } from './components/Levels';
 import { SettingsView } from './components/Menu';
-import { elementsIn } from './lib/elementals';
+import { elementsIn } from './lib/elements';
 import {
   isFresh,
   levelById,
@@ -38,7 +38,8 @@ const SLIDE_MS = 320;
 
 export default function App() {
   // Keys are prefixed: other apps on the same GitHub Pages origin share
-  // this storage.
+  // this storage. They keep the game's old name, Elementals, so saved
+  // progress carries over.
   const [store, setStore] = useStoredState<{ game?: Game }>('elementals', {});
   // A saved game of a level since taken out or changed starts afresh.
   const game = savedGame(store.game) ?? newGame(LEVELS[0]);
@@ -262,7 +263,7 @@ export default function App() {
       {view === 'settings' && (
         <footer className='footer'>
           <a href='/des-kids-games/'>{t.allGames}</a>
-          <a href='https://github.com/mardesnic/des-elementals'>{t.source}</a>
+          <a href='https://github.com/mardesnic/des-elements'>{t.source}</a>
         </footer>
       )}
       {celebrating && <Confetti onDone={() => setCelebrating(false)} />}

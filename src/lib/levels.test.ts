@@ -14,7 +14,7 @@ import {
   tapsToWin,
   type Level,
   type State,
-} from './elementals';
+} from './elements';
 import { LEVELS, WORLDS, worldOf } from './levels';
 
 // How many reachable positions can no longer be won. Walks every move from

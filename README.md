@@ -6,7 +6,7 @@ Made for ages 5 and up. There is no timer and no way to lose. Undo takes back th
 
 ## Demo
 
-Check out the live demo at: https://mardesnic.github.io/des-elementals/
+Check out the live demo at: https://mardesnic.github.io/des-elements/
 
 On your phone, open it and choose **Add to Home Screen** (Safari) or **Install app** (Chrome). It then opens like an app and works offline.
 

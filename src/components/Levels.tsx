@@ -1,4 +1,4 @@
-import { elementsIn, parse } from '../lib/elementals';
+import { elementsIn, parse } from '../lib/elements';
 import type { Progress } from '../lib/game';
 import type { Strings } from '../lib/i18n';
 import { LEVELS, WORLDS, levelsOf } from '../lib/levels';

@@ -14,7 +14,7 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import type { Level } from '../src/lib/elementals.ts';
+import type { Level } from '../src/lib/elements.ts';
 import { noDeadEnds, solvable, taps as tapsToWin } from './solver.ts';
 
 type Kind =

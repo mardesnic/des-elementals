@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/des-elementals/',
+  base: '/des-elements/',
   plugins: [
     react(),
     // Installable from the browser menu, and works offline once loaded.
@@ -14,7 +14,7 @@ export default defineConfig({
       manifest: {
         // A fixed id of its own, so a phone never mixes it up with an earlier
         // install or with the other games on this site.
-        id: 'des-elementals',
+        id: 'des-elements',
         name: 'Elements',
         short_name: 'Elements',
         description: 'A puzzle for kids: help the elements find each other',

@@ -1,4 +1,4 @@
-import type { Element, Tile } from './elementals';
+import type { Element, Tile } from './elements';
 import type { World } from './levels';
 
 export const LANGS = ['en', 'hr'] as const;

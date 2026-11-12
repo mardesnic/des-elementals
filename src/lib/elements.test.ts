@@ -13,7 +13,7 @@ import {
   tapsToWin,
   walks,
   type Level,
-} from './elementals';
+} from './elements';
 
 const setup = (...rows: string[]) => {
   const level: Level = { id: 'test', rows };

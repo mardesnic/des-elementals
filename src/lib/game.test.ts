@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { boardOf, walks } from './elementals';
+import { boardOf, walks } from './elements';
 import {
   isFresh,
   levelById,

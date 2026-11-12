@@ -10,7 +10,7 @@ import {
   type Element,
   type Level,
   type State,
-} from './elementals';
+} from './elements';
 import { LEVELS } from './levels';
 
 export type Game = {

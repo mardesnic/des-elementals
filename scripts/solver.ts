@@ -1,4 +1,4 @@
-// A fast solver for making levels: the same rules as src/lib/elementals.ts
+// A fast solver for making levels: the same rules as src/lib/elements.ts
 // on plain numbers, so millions of random boards can be tried. The level
 // tests check the levels again with the game's own rules.
 //

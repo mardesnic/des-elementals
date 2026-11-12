@@ -1,4 +1,4 @@
-import { elementsIn, parse, type Level } from './elementals';
+import { elementsIn, parse, type Level } from './elements';
 import data from '../levels.json';
 
 // Made by scripts/make-levels.ts, easiest first. The tests check each one
