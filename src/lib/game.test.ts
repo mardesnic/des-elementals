@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { boardOf, walks } from './elements';
 import {
   isFresh,
+  isOpen,
   levelById,
   newGame,
   nextLevel,
@@ -248,5 +249,25 @@ describe('progress', () => {
     const [a, b] = LEVELS.map((l) => l.id);
     expect(nextLevel(a).id).toBe(b);
     expect(nextLevel(LEVELS.at(-1)!.id).id).toBe(a);
+  });
+});
+
+describe('isOpen', () => {
+  const [a, b, c, d] = LEVELS.map((l) => l.id);
+
+  it('opens only the first level at the start', () => {
+    expect(isOpen(a, [], a)).toBe(true);
+    expect(isOpen(b, [], a)).toBe(false);
+  });
+
+  it('opens the level after one that is won', () => {
+    expect(isOpen(b, [a], b)).toBe(true);
+    expect(isOpen(c, [a], b)).toBe(false);
+    expect(isOpen(c, [a, b], c)).toBe(true);
+  });
+
+  it('keeps won levels and the one being played open', () => {
+    expect(isOpen(d, [d], a)).toBe(true);
+    expect(isOpen(c, [], c)).toBe(true);
   });
 });

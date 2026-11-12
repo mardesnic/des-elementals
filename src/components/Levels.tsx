@@ -1,5 +1,5 @@
 import { elementsIn, parse } from '../lib/elements';
-import type { Progress } from '../lib/game';
+import { isOpen, type Progress } from '../lib/game';
 import type { Strings } from '../lib/i18n';
 import { LEVELS, WORLDS, levelsOf } from '../lib/levels';
 import { Friend } from './Art';
@@ -40,6 +40,9 @@ export function Levels({
               {levels.map((level) => {
                 const n = LEVELS.indexOf(level) + 1;
                 const won = progress.includes(level.id);
+                // In dev every level is open, to try any of them.
+                const open =
+                  import.meta.env.DEV || isOpen(level.id, progress, current);
                 return (
                   <button
                     key={level.id}
@@ -47,11 +50,19 @@ export function Levels({
                       'level',
                       won && 'level--won',
                       level.id === current && 'level--current',
+                      !open && 'level--locked',
                     ]
                       .filter(Boolean)
                       .join(' ')}
                     onClick={() => onPick(level.id)}
-                    aria-label={won ? `${t.level(n)}, ${t.won}` : t.level(n)}
+                    disabled={!open}
+                    aria-label={
+                      won
+                        ? `${t.level(n)}, ${t.won}`
+                        : open
+                          ? t.level(n)
+                          : `${t.level(n)}, ${t.locked}`
+                    }
                   >
                     {n}
                   </button>

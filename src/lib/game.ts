@@ -161,3 +161,16 @@ export function nextLevel(current: string): Level {
   const at = LEVELS.findIndex((l) => l.id === current);
   return LEVELS[(at + 1) % LEVELS.length];
 }
+
+// Whether a level can be played: the first one, one already won, the one
+// being played, and the one right after a level that's won. A new level
+// opens only by winning the one before it.
+export function isOpen(id: string, progress: Progress, current: string) {
+  const at = LEVELS.findIndex((l) => l.id === id);
+  return (
+    at === 0 ||
+    id === current ||
+    progress.includes(id) ||
+    (at > 0 && progress.includes(LEVELS[at - 1].id))
+  );
+}

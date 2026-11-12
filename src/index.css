@@ -1239,6 +1239,15 @@ h2 {
   border-color: var(--accent);
 }
 
+/* Opens by winning the level before it. */
+.level--locked {
+  opacity: 0.35;
+}
+
+.level--locked:active {
+  transform: none;
+}
+
 .footer {
   display: flex;
   justify-content: center;
