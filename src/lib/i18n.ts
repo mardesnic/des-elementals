@@ -84,6 +84,7 @@ const en = {
   off: 'Off',
   allGames: 'All games',
   source: 'Source',
+  version: 'Version',
   progress: 'Progress',
   progressCount: (done: number, total: number) =>
     `Levels done: ${done} / ${total}`,
@@ -163,6 +164,7 @@ const hr: Strings = {
   off: 'Isključeno',
   allGames: 'Sve igre',
   source: 'Izvorni kod',
+  version: 'Verzija',
   progress: 'Napredak',
   progressCount: (done: number, total: number) =>
     `Riješene razine: ${done} / ${total}`,
