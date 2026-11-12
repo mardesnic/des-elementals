@@ -7,7 +7,6 @@ import { Levels } from './components/Levels';
 import { SettingsView } from './components/Menu';
 import { elementsIn } from './lib/elementals';
 import {
-  initialSettings,
   isFresh,
   levelById,
   newGame,
@@ -19,13 +18,13 @@ import {
   tap,
   type Game,
   type Progress,
-  type Settings,
   type Turn,
 } from './lib/game';
 import { STRINGS, detectLang } from './lib/i18n';
-import { LEVELS, hintFor, worldOf } from './lib/levels';
+import { LEVELS, worldOf } from './lib/levels';
 import { popMenu, pushMenu, useBackButton } from './lib/use-back-button';
 import { useCheer } from './lib/use-cheer';
+import { useLanguage, useSound } from './lib/use-shared-settings';
 import { useStoredState } from './lib/use-stored-state';
 import { useWakeLock } from './lib/use-wake-lock';
 
@@ -50,10 +49,6 @@ export default function App() {
   );
   const progress = Array.isArray(stored.won) ? stored.won : [];
   const setProgress = (won: Progress) => setStored({ won });
-  const [settings, setSettings] = useStoredState<Settings>(
-    'elementals-settings',
-    initialSettings
-  );
   const [view, setViewState] = useState<View>('play');
   // Menus open over the game, so the phone's Back button closes them.
   const setView = (next: View) => {
@@ -66,9 +61,11 @@ export default function App() {
   const [bump, setBump] = useState<Bump>();
   const [celebrating, setCelebrating] = useState(false);
   useWakeLock();
-  const cheer = useCheer(settings.sound);
+  const [sound, setSound] = useSound();
+  const cheer = useCheer(sound);
 
-  const lang = settings.language === 'auto' ? detectLang() : settings.language;
+  const [language, setLanguage] = useLanguage();
+  const lang = language === 'auto' ? detectLang() : language;
   const t = STRINGS[lang];
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -96,7 +93,7 @@ export default function App() {
     stopWalking();
     if (stuck) {
       setBump((b) => ({ who: stuck, n: (b?.n ?? 0) + 1 }));
-      navigator.vibrate?.(30);
+      if (sound) navigator.vibrate?.(30);
     }
     if (!steps.length) return;
     if (steps.some((s) => s.state !== game.state))
@@ -149,7 +146,6 @@ export default function App() {
 
   const n = LEVELS.indexOf(level) + 1;
   const last = n === LEVELS.length;
-  const hint = hintFor(level);
 
   return (
     <main className={view === 'play' ? 'app app--play' : 'app'}>
@@ -187,8 +183,10 @@ export default function App() {
       )}
       {view === 'settings' && (
         <SettingsView
-          settings={settings}
-          setSettings={setSettings}
+          language={language}
+          setLanguage={setLanguage}
+          sound={sound}
+          setSound={setSound}
           done={LEVELS.filter((l) => progress.includes(l.id)).length}
           total={LEVELS.length}
           onReset={resetProgress}
@@ -233,7 +231,6 @@ export default function App() {
           ) : (
             <div className='bar'>
               <span className='bar__level'>{t.level(n)}</span>
-              {hint && <p className='hint'>{t.hints[hint]}</p>}
               <div className='tools'>
                 <button
                   className='tool'
@@ -259,6 +256,7 @@ export default function App() {
 
       {view === 'settings' && (
         <footer className='footer'>
+          <a href='/des-kids-games/'>{t.allGames}</a>
           <a href='https://github.com/mardesnic/des-elementals'>{t.source}</a>
         </footer>
       )}

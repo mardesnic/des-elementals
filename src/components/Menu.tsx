@@ -1,6 +1,5 @@
 import { useState } from 'react';
 
-import type { Settings } from '../lib/game';
 import { LANG_NAMES, LANGS, type Language, type Strings } from '../lib/i18n';
 
 function Segmented<T>({
@@ -30,15 +29,19 @@ function Segmented<T>({
 }
 
 export function SettingsView({
-  settings,
-  setSettings,
+  language,
+  setLanguage,
+  sound,
+  setSound,
   done,
   total,
   onReset,
   t,
 }: {
-  settings: Settings;
-  setSettings: (s: Settings) => void;
+  language: Language;
+  setLanguage: (l: Language) => void;
+  sound: boolean;
+  setSound: (on: boolean) => void;
   // Levels won so far, out of all of them.
   done: number;
   total: number;
@@ -58,9 +61,9 @@ export function SettingsView({
         <span>{t.language}</span>
         <Segmented
           options={languages}
-          value={settings.language}
+          value={language}
           label={(l) => (l === 'auto' ? t.automatic : LANG_NAMES[l])}
-          onChange={(language) => setSettings({ ...settings, language })}
+          onChange={setLanguage}
         />
       </div>
 
@@ -68,9 +71,9 @@ export function SettingsView({
         <span>{t.sound}</span>
         <Segmented
           options={[true, false]}
-          value={settings.sound}
+          value={sound}
           label={(on) => (on ? t.on : t.off)}
-          onChange={(sound) => setSettings({ ...settings, sound })}
+          onChange={setSound}
         />
       </div>
 

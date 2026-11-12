@@ -1,5 +1,5 @@
 import type { Element, Tile } from './elementals';
-import type { Hint, World } from './levels';
+import type { World } from './levels';
 
 export const LANGS = ['en', 'hr'] as const;
 export type Lang = (typeof LANGS)[number];
@@ -22,20 +22,6 @@ const en = {
   levels: 'Levels',
   done: 'Done',
   level: (n: number) => `Level ${n}`,
-  hints: {
-    fire: 'Take fire to its temple, where it becomes the sun. Tap where it should go.',
-    coal: 'Fire can set a pile of coal alight, and it burns away. Tap the coal!',
-    water:
-      'Bring fire to the fire temple and water to the water temple. Tap one, then where it should go.',
-    earth:
-      'Here comes earth! It fills holes and has its own temple, where it grows into a tree.',
-    boulder:
-      'Earth can push a round stone. In water, the stone becomes a little bridge.',
-    air: 'Here comes air! It flies over water and holes, but once it starts, it keeps going until something stops it. In its temple it becomes a cloud that blows a breeze.',
-    vane: 'While air stands on the weather vane, the wind gate stays up for the others.',
-    people:
-      'Last of all, a man and a woman want to meet in the heart temple. Bring everyone home!',
-  } satisfies Record<Hint, string>,
   undo: 'Undo',
   clear: 'Start over',
   solved: 'Well done!',
@@ -92,9 +78,10 @@ const en = {
   won: 'done',
   language: 'Language',
   automatic: 'Automatic',
-  sound: 'Sound',
+  sound: 'Sound and vibration',
   on: 'On',
   off: 'Off',
+  allGames: 'All games',
   source: 'Source',
   progress: 'Progress',
   progressCount: (done: number, total: number) =>
@@ -114,20 +101,6 @@ const hr: Strings = {
   levels: 'Razine',
   done: 'Gotovo',
   level: (n: number) => `Razina ${n}`,
-  hints: {
-    fire: 'Odvedi vatru do njezina hrama, gdje postaje sunce. Dodirni kamo treba ići.',
-    coal: 'Vatra može zapaliti hrpu ugljena, pa izgori. Dodirni ugljen!',
-    water:
-      'Dovedi vatru do vatrenog hrama, a vodu do vodenog. Dodirni jednu, pa kamo treba ići.',
-    earth:
-      'Stiže zemlja! Ona zatrpava rupe i ima svoj hram, gdje izraste u drvo.',
-    boulder:
-      'Zemlja može gurnuti okrugli kamen. U vodi kamen postane mali most.',
-    air: 'Stiže zrak! Leti preko vode i rupa, ali kad krene, juri ravno dok ga nešto ne zaustavi. U svom hramu postaje oblačić koji puše.',
-    vane: 'Dok zrak stoji na vjetrokazu, vjetrena vrata ostaju podignuta za ostale.',
-    people:
-      'Na kraju se muškarac i žena žele naći u hramu srca. Odvedi sve kući!',
-  },
   undo: 'Poništi',
   clear: 'Ispočetka',
   solved: 'Bravo!',
@@ -183,9 +156,10 @@ const hr: Strings = {
   won: 'riješeno',
   language: 'Jezik',
   automatic: 'Automatski',
-  sound: 'Zvuk',
+  sound: 'Zvuk i vibracija',
   on: 'Uključen',
   off: 'Isključen',
+  allGames: 'Sve igre',
   source: 'Izvorni kod',
   progress: 'Napredak',
   progressCount: (done: number, total: number) =>

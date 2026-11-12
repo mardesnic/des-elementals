@@ -493,3 +493,8 @@ export function taps(
   }
   return undefined;
 }
+
+// How many states a player can reach, up to `limit`.
+export function states(rows: string[], limit = Infinity): number {
+  return reachable(load(rows), false, limit).count;
+}

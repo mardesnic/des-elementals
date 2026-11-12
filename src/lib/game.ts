@@ -11,18 +11,7 @@ import {
   type Level,
   type State,
 } from './elementals';
-import type { Language } from './i18n';
 import { LEVELS } from './levels';
-
-export type Settings = {
-  language: Language;
-  sound: boolean;
-};
-
-export const initialSettings: Settings = {
-  language: 'auto',
-  sound: true,
-};
 
 export type Game = {
   level: string;

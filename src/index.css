@@ -1077,12 +1077,6 @@ h2 {
   color: var(--muted);
 }
 
-.hint {
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
 .tools {
   display: grid;
   grid-auto-flow: column;
@@ -1209,6 +1203,7 @@ h2 {
   display: flex;
   justify-content: center;
   padding-top: 4px;
+  gap: 20px;
 }
 
 .footer a {

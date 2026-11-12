@@ -487,10 +487,7 @@ function make(slots: Slot[], seed: number, tries: number, perSlot = false) {
       continue;
     }
     used.add(best.rows.join('/'));
-    const id = createHash('sha1')
-      .update(best.rows.join('/'))
-      .digest('hex')
-      .slice(0, 8);
+    const id = idOf(best.rows);
     levels.push({ id, rows: best.rows, taps: best.taps * 10 + best.switches });
     console.log(
       `${n + 1}. ${slot.kinds.join('+') || 'walk'}: ${best.taps} taps, ${best.switches} switches (${fits} fit)\n   ${best.rows.join('\n   ')}`
@@ -510,6 +507,27 @@ function distance(rows: string[], a: string, b: string) {
     Math.abs(Math.floor(i / w) - Math.floor(j / w))
   );
 }
+
+// A level's id, from its board.
+const idOf = (rows: string[]) =>
+  createHash('sha1').update(rows.join('/')).digest('hex').slice(0, 8);
+
+// The last level, everyone with every obstacle. The man and the woman
+// start apart and find their way to each other: he through the wind gate
+// that air holds up on the vane, she over the bridge that earth makes by
+// pushing the stone into the water, before it fills the pit on its way
+// home. Fire burns the coal and holds the brazier, so water, once fire
+// has melted the ice, gets through the grate to turn the wheel; that
+// holds the sluice up for fire on its way home.
+const LAST = [
+  'm.Zv#t~',
+  '####~BF',
+  'M..V#.*',
+  '~~~h#a.',
+  'L~@E#iW',
+  '~~~o#A#',
+  '~~~e#bs',
+];
 
 const WORLDS = {
   fire: { slots: FIRE, seed: 20261112, intro: FIRE.length, tries: 100000 },
@@ -546,6 +564,10 @@ async function apart(name: World): Promise<Made[]> {
 // A world's levels: the first few each bring in one new thing, in the
 // order of their slots; after them, levels go from fewest taps to most.
 async function world(name: World) {
+  // The last level is made by hand: with six friends a board open enough
+  // for every obstacle is far too big to find at random. A run of only
+  // WORLD=people still makes random ones (spares are in spare-levels.json).
+  if (name === 'people' && !only) return [{ id: idOf(LAST), rows: LAST }];
   const { slots, seed, intro, tries } = WORLDS[name];
   const perSlot = 'perSlot' in WORLDS[name];
   const levels = perSlot

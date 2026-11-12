@@ -30,20 +30,3 @@ export function worldOf(level: Level): World {
 // The levels of each world, in order.
 export const levelsOf = (world: World) =>
   LEVELS.filter((l) => worldOf(l) === world);
-
-// Things shown for the first time on a level, with their letters.
-const NEW = { coal: '*', boulder: '@', vane: 'v' } as const;
-
-// What to tell a kid on a level: how to play on the first level of each
-// world, and what coal, a round stone or a vane is the first time there
-// is one.
-export type Hint = World | keyof typeof NEW;
-export function hintFor(level: Level): Hint | undefined {
-  const at = LEVELS.indexOf(level);
-  const before = LEVELS[at - 1];
-  if (!before || worldOf(before) !== worldOf(level)) return worldOf(level);
-  const has = (ch: string) => (l: Level) => l.rows.join('').includes(ch);
-  for (const [hint, ch] of Object.entries(NEW) as [Hint, string][])
-    if (has(ch)(level) && !LEVELS.slice(0, at).some(has(ch))) return hint;
-  return undefined;
-}

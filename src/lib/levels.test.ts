@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { solvable } from '../../scripts/solver';
+import { noDeadEnds, solvable, taps } from '../../scripts/solver';
 import {
   ELEMENTS,
   boardOf,
@@ -15,7 +15,7 @@ import {
   type Level,
   type State,
 } from './elementals';
-import { LEVELS, WORLDS, hintFor, worldOf } from './levels';
+import { LEVELS, WORLDS, worldOf } from './levels';
 
 // How many reachable positions can no longer be won. Walks every move from
 // the start, then works back from the wins.
@@ -54,6 +54,11 @@ function deadEnds(level: Level): number {
 // With all four friends, checking a level with the game's own rules takes
 // a while.
 const SLOW = 300_000;
+
+// The last level, with six friends, has too many positions to check with
+// the game's own rules, so it is checked with the solver alone, which
+// solver.test.ts checks against them.
+const big = (level: Level) => worldOf(level) === 'people';
 
 describe('levels', () => {
   it('are there', () => {
@@ -97,29 +102,17 @@ describe('levels', () => {
     );
   });
 
-  it('tell how to play at the start of each world', () => {
-    const fire = LEVELS.findIndex((l) => worldOf(l) === 'fire');
-    const both = LEVELS.findIndex((l) => worldOf(l) === 'water');
-    expect(hintFor(LEVELS[fire])).toBe('fire');
-    expect(hintFor(LEVELS[both])).toBe('water');
-    const coal = LEVELS.findIndex((l) => l.rows.join('').includes('*'));
-    expect(hintFor(LEVELS[coal])).toBe('coal');
-    const earth = LEVELS.findIndex((l) => worldOf(l) === 'earth');
-    expect(hintFor(LEVELS[earth])).toBe('earth');
-    const stone = LEVELS.findIndex((l) => l.rows.join('').includes('@'));
-    expect(worldOf(LEVELS[stone])).toBe('earth');
-    expect(hintFor(LEVELS[stone])).toBe('boulder');
-    const air = LEVELS.findIndex((l) => worldOf(l) === 'air');
-    expect(hintFor(LEVELS[air])).toBe('air');
-    const vane = LEVELS.findIndex((l) => l.rows.join('').includes('v'));
-    expect(worldOf(LEVELS[vane])).toBe('air');
-    expect(hintFor(LEVELS[vane])).toBe('vane');
-    // One last level with the man and the woman.
+  it('bring in the stone in earth and the vane in air', () => {
+    const first = (ch: string) =>
+      LEVELS.find((l) => l.rows.join('').includes(ch))!;
+    expect(worldOf(first('@'))).toBe('earth');
+    expect(worldOf(first('v'))).toBe('air');
+  });
+
+  it('end with one level for the man and the woman', () =>
     expect(LEVELS.filter((l) => worldOf(l) === 'people')).toEqual([
       LEVELS.at(-1),
-    ]);
-    expect(hintFor(LEVELS.at(-1)!)).toBe('people');
-  });
+    ]));
 
   it('keep fire alone away from ice, which would only block it', () => {
     for (const level of LEVELS.filter((l) => worldOf(l) === 'fire'))
@@ -138,6 +131,7 @@ describe('levels', () => {
     '$id can be won',
     (level) => {
       expect(solvable(level.rows)).toBe(true);
+      if (big(level)) return expect(taps(level.rows)).toBeDefined();
       const b = boardOf(level);
       expect(movesToWin(b, parse(level))).toBeGreaterThan(0);
       expect(tapsToWin(b, parse(level))).toBeDefined();
@@ -147,19 +141,23 @@ describe('levels', () => {
 
   // Turning any obstacle into rock makes the level impossible, so each one
   // has to be used.
-  it.each(LEVELS)('$id needs every obstacle', (level) => {
-    const flat = level.rows.join('');
-    const w = level.rows[0].length;
-    for (let i = 0; i < flat.length; i++) {
-      if (!'*iaAbBo@vV'.includes(flat[i])) continue;
-      const rows = level.rows.map((r, y) =>
-        y === Math.floor(i / w)
-          ? r.slice(0, i % w) + '#' + r.slice((i % w) + 1)
-          : r
-      );
-      expect(solvable(rows), `square ${i}`).toBe(false);
-    }
-  });
+  it.each(LEVELS)(
+    '$id needs every obstacle',
+    (level) => {
+      const flat = level.rows.join('');
+      const w = level.rows[0].length;
+      for (let i = 0; i < flat.length; i++) {
+        if (!'*iaAbBo@vV'.includes(flat[i])) continue;
+        const rows = level.rows.map((r, y) =>
+          y === Math.floor(i / w)
+            ? r.slice(0, i % w) + '#' + r.slice((i % w) + 1)
+            : r
+        );
+        expect(solvable(rows), `square ${i}`).toBe(false);
+      }
+    },
+    SLOW
+  );
 
   // Where there are water and a round stone, the stone has to become a
   // bridge.
@@ -177,7 +175,10 @@ describe('levels', () => {
   // No way to lose: whatever a kid does, the level can still be won.
   it.each(LEVELS)(
     '$id has no dead ends',
-    (level) => expect(deadEnds(level)).toBe(0),
+    (level) =>
+      big(level)
+        ? expect(noDeadEnds(level.rows)).toBe(true)
+        : expect(deadEnds(level)).toBe(0),
     SLOW
   );
 });
