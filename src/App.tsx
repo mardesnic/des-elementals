@@ -33,6 +33,8 @@ type View = 'play' | 'levels' | 'settings';
 
 // How long one step of a walk takes, in ms. The CSS slide matches it.
 const STEP_MS = 130;
+// Air flies on until it stops, so each of its moves takes longer.
+const SLIDE_MS = 320;
 
 export default function App() {
   // Keys are prefixed: other apps on the same GitHub Pages origin share
@@ -109,7 +111,10 @@ export default function App() {
       }
       walking.current =
         k + 1 < steps.length
-          ? window.setTimeout(() => go(k + 1), STEP_MS)
+          ? window.setTimeout(
+              () => go(k + 1),
+              next.active === 'air' ? SLIDE_MS : STEP_MS
+            )
           : undefined;
     };
     go(0);
@@ -208,7 +213,7 @@ export default function App() {
               state={game.state}
               active={game.active}
               won={game.won}
-              finale={game.won && last}
+              world={worldOf(level)}
               reach={reachable(game)}
               bump={bump}
               onTap={(i) => play(tap(game, i))}

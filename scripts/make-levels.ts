@@ -1,23 +1,31 @@
 // Builds src/levels.json: random boards, kept only when every obstacle on
 // them is needed, then the best of them in order of how many taps they take.
 // First a world of fire alone, then fire and water, then fire, water and
-// earth together.
+// earth together, and last all four with air.
 //
 //   npm run levels
 //
-// A board is kept when it can be won and when turning any ice, bramble,
-// brazier, wheel, grate, sluice, pit or round stone into rock (or all the
+// A board is kept when it can be won and when turning any ice, coal,
+// brazier, wheel, grate, sluice, pit, round stone, vane or wind gate into rock (or all the
 // water, if it has some) makes it impossible. So nothing is there just for show, and no shortcut skips it.
 // It must also have no dead ends: no move, such as one friend shutting the
 // other in, can leave it unwinnable.
+import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 import type { Level } from '../src/lib/elementals.ts';
 import { noDeadEnds, solvable, taps as tapsToWin } from './solver.ts';
 
 type Kind =
-  'water' | 'bramble' | 'ice' | 'grate' | 'sluice' | 'pit' | 'boulder';
+  | 'water'
+  | 'coal'
+  | 'ice'
+  | 'grate'
+  | 'sluice'
+  | 'pit'
+  | 'boulder'
+  | 'windGate';
 
 type Slot = {
   size: [number, number];
@@ -27,36 +35,41 @@ type Slot = {
   switches: number;
   // Fire on its own, without water.
   alone?: boolean;
-  // The most brambles, if not 2.
-  brambles?: number;
+  // The most coals, if not 2.
+  coals?: number;
   // Earth too, with fire and water.
   earth?: boolean;
+  // Air too, with all the others.
+  air?: boolean;
+  // The man and the woman too, with everyone, and more rock, which keeps
+  // the ways to move few enough to check.
+  people?: boolean;
   // The most pits and round stones, if not 2 and 1.
   pits?: number;
   stones?: number;
 };
 
-// Fire alone: walking to its temple, then burning brambles on the way.
+// Fire alone: walking to its temple, then burning coals on the way.
 // Ice is left out: melted, it only blocks fire.
 const FIRE: Slot[] = [
   { size: [4, 4], kinds: [], taps: [1, 1], switches: 0, alone: true },
-  { size: [4, 4], kinds: ['bramble'], taps: [2, 2], switches: 0, alone: true },
-  { size: [5, 5], kinds: ['bramble'], taps: [3, 3], switches: 0, alone: true },
+  { size: [4, 4], kinds: ['coal'], taps: [2, 2], switches: 0, alone: true },
+  { size: [5, 5], kinds: ['coal'], taps: [3, 3], switches: 0, alone: true },
   {
     size: [5, 5],
-    kinds: ['bramble'],
+    kinds: ['coal'],
     taps: [3, 4],
     switches: 0,
     alone: true,
-    brambles: 3,
+    coals: 3,
   },
   {
     size: [6, 6],
-    kinds: ['bramble'],
+    kinds: ['coal'],
     taps: [4, 4],
     switches: 0,
     alone: true,
-    brambles: 3,
+    coals: 3,
   },
 ];
 
@@ -75,7 +88,7 @@ const EARTH: Slot[] = [
   },
   {
     size: [6, 6],
-    kinds: ['pit', 'bramble'],
+    kinds: ['pit', 'coal'],
     taps: [4, 8],
     switches: 2,
     earth: true,
@@ -103,14 +116,14 @@ const EARTH: Slot[] = [
   },
   {
     size: [6, 6],
-    kinds: ['boulder', 'bramble'],
+    kinds: ['boulder', 'coal'],
     taps: [4, 8],
     switches: 3,
     earth: true,
   },
   {
     size: [6, 6],
-    kinds: ['water', 'boulder', 'bramble'],
+    kinds: ['water', 'boulder', 'coal'],
     taps: [4, 8],
     switches: 3,
     earth: true,
@@ -138,24 +151,111 @@ const EARTH: Slot[] = [
   },
 ];
 
+// All four, with air: it flies over water and holes, but once it starts
+// it keeps going until something stops it. Its vane holds the wind gate.
+const AIR: Slot[] = [
+  {
+    size: [5, 5],
+    kinds: [],
+    taps: [4, 6],
+    switches: 3,
+    earth: true,
+    air: true,
+  },
+  {
+    size: [5, 5],
+    kinds: ['water'],
+    taps: [4, 7],
+    switches: 3,
+    earth: true,
+    air: true,
+  },
+  {
+    size: [6, 6],
+    kinds: ['windGate'],
+    taps: [5, 9],
+    switches: 3,
+    earth: true,
+    air: true,
+  },
+  {
+    size: [6, 6],
+    kinds: ['pit', 'water'],
+    taps: [5, 9],
+    switches: 3,
+    earth: true,
+    air: true,
+  },
+  {
+    size: [6, 6],
+    kinds: ['boulder', 'coal'],
+    taps: [5, 10],
+    switches: 4,
+    earth: true,
+    air: true,
+  },
+  {
+    size: [6, 6],
+    kinds: ['windGate', 'water'],
+    taps: [5, 10],
+    switches: 4,
+    earth: true,
+    air: true,
+  },
+  {
+    size: [6, 6],
+    kinds: ['windGate', 'pit'],
+    taps: [5, 10],
+    switches: 4,
+    earth: true,
+    air: true,
+  },
+  {
+    size: [6, 6],
+    kinds: ['windGate', 'grate'],
+    taps: [6, 11],
+    switches: 4,
+    earth: true,
+    air: true,
+  },
+];
+
+// The last level: everyone, and a man and a woman who meet in the heart
+// temple. They can't do anything special; they are just in the way.
+const PEOPLE: Slot[] = [
+  {
+    size: [5, 5],
+    kinds: [],
+    taps: [7, 12],
+    switches: 6,
+    earth: true,
+    air: true,
+    people: true,
+  },
+];
+
+// The most states a level may have, so the tests can check it with the
+// game's own rules in time.
+const LIMIT = 300_000;
+
 // Fire and water. Easiest first: one new thing at a time, then mixed. Water with ice
 // never made a good board, so those mixes are left out.
 const SLOTS: Slot[] = [
   { size: [5, 5], kinds: [], taps: [2, 2], switches: 1 },
   { size: [5, 5], kinds: ['water'], taps: [2, 3], switches: 1 },
-  { size: [5, 5], kinds: ['bramble'], taps: [3, 4], switches: 1 },
+  { size: [5, 5], kinds: ['coal'], taps: [3, 4], switches: 1 },
   { size: [5, 5], kinds: ['ice'], taps: [3, 4], switches: 1 },
   { size: [5, 5], kinds: ['grate'], taps: [3, 4], switches: 1 },
   { size: [5, 5], kinds: ['sluice'], taps: [3, 4], switches: 1 },
-  { size: [5, 5], kinds: ['water', 'bramble'], taps: [3, 5], switches: 1 },
+  { size: [5, 5], kinds: ['water', 'coal'], taps: [3, 5], switches: 1 },
   { size: [6, 6], kinds: ['ice', 'grate'], taps: [4, 6], switches: 2 },
-  { size: [6, 6], kinds: ['bramble', 'sluice'], taps: [4, 6], switches: 2 },
+  { size: [6, 6], kinds: ['coal', 'sluice'], taps: [4, 6], switches: 2 },
   { size: [6, 6], kinds: ['grate', 'sluice'], taps: [4, 7], switches: 2 },
-  { size: [6, 6], kinds: ['ice', 'bramble'], taps: [4, 7], switches: 2 },
+  { size: [6, 6], kinds: ['ice', 'coal'], taps: [4, 7], switches: 2 },
   { size: [6, 6], kinds: ['water', 'grate'], taps: [5, 7], switches: 2 },
   {
     size: [6, 6],
-    kinds: ['ice', 'bramble', 'sluice'],
+    kinds: ['ice', 'coal', 'sluice'],
     taps: [5, 8],
     switches: 3,
   },
@@ -173,32 +273,32 @@ const SLOTS: Slot[] = [
   },
   {
     size: [7, 7],
-    kinds: ['bramble', 'grate', 'sluice'],
+    kinds: ['coal', 'grate', 'sluice'],
     taps: [6, 9],
     switches: 3,
   },
   {
     size: [7, 7],
-    kinds: ['ice', 'bramble', 'grate', 'sluice'],
+    kinds: ['ice', 'coal', 'grate', 'sluice'],
     taps: [6, 10],
     switches: 4,
   },
   {
     size: [7, 7],
-    kinds: ['water', 'bramble', 'grate', 'sluice'],
+    kinds: ['water', 'coal', 'grate', 'sluice'],
     taps: [6, 10],
     switches: 4,
   },
   { size: [6, 6], kinds: ['water', 'sluice'], taps: [5, 8], switches: 3 },
   {
     size: [6, 6],
-    kinds: ['water', 'bramble', 'sluice'],
+    kinds: ['water', 'coal', 'sluice'],
     taps: [5, 8],
     switches: 3,
   },
   {
     size: [7, 7],
-    kinds: ['ice', 'bramble', 'sluice'],
+    kinds: ['ice', 'coal', 'sluice'],
     taps: [6, 10],
     switches: 4,
   },
@@ -234,7 +334,7 @@ function randomBoard(slot: Slot, rnd: () => number): string[] {
     throw new Full();
   };
 
-  const rock = 0.15 + rnd() * 0.2;
+  const rock = (slot.people ? 0.35 : 0.15) + rnd() * 0.2;
   for (let i = 0; i < cells.length; i++) if (rnd() < rock) cells[i] = '#';
 
   if (slot.kinds.includes('water')) {
@@ -250,12 +350,14 @@ function randomBoard(slot: Slot, rnd: () => number): string[] {
   }
   const several = (n: number) => 1 + pick(n);
   for (const kind of slot.kinds) {
-    if (kind === 'bramble')
-      for (let k = several(slot.brambles ?? 2); k > 0; k--) cells[free()] = '*';
+    if (kind === 'coal')
+      for (let k = several(slot.coals ?? 2); k > 0; k--) cells[free()] = '*';
     if (kind === 'ice')
       for (let k = several(2); k > 0; k--) cells[free()] = 'i';
-    if (kind === 'grate' || kind === 'sluice') {
-      const [holder, gate] = kind === 'grate' ? ['a', 'A'] : ['b', 'B'];
+    if (kind === 'grate' || kind === 'sluice' || kind === 'windGate') {
+      const [holder, gate] = { grate: 'aA', sluice: 'bB', windGate: 'vV' }[
+        kind
+      ];
       cells[free()] = gate;
       cells[free()] = holder;
     }
@@ -269,9 +371,16 @@ function randomBoard(slot: Slot, rnd: () => number): string[] {
   cells[free()] = 't';
   if (!slot.alone) cells[free()] = 's';
   if (slot.earth) cells[free()] = 'e';
+  if (slot.air) cells[free()] = 'm';
+  if (slot.people) cells[free()] = 'h';
   cells[free()] = 'F';
   if (!slot.alone) cells[free()] = 'W';
   if (slot.earth) cells[free()] = 'E';
+  if (slot.air) cells[free()] = 'Z';
+  if (slot.people) {
+    cells[free()] = 'M';
+    cells[free()] = 'L';
+  }
 
   return Array.from({ length: h }, (_, r) =>
     cells.slice(r * w, (r + 1) * w).join('')
@@ -291,7 +400,7 @@ function allNeeded(rows: string[], slot: Slot): boolean {
   const flat = rows.join('');
   const w = rows[0].length;
   for (let i = 0; i < flat.length; i++) {
-    if (!'*iaAbBo@'.includes(flat[i])) continue;
+    if (!'*iaAbBo@vV'.includes(flat[i])) continue;
     const without = rows.map((r, y) =>
       y === Math.floor(i / w)
         ? r.slice(0, i % w) + '#' + r.slice((i % w) + 1)
@@ -319,12 +428,13 @@ const hasAll = (rows: string[], slot: Slot) => {
   const flat = rows.join('');
   const letter: Record<Kind, string> = {
     water: '~',
-    bramble: '*',
+    coal: '*',
     ice: 'i',
     grate: 'A',
     sluice: 'B',
     pit: 'o',
     boulder: '@',
+    windGate: 'V',
   };
   return slot.kinds.every((k) => flat.includes(letter[k]));
 };
@@ -332,12 +442,21 @@ const hasAll = (rows: string[], slot: Slot) => {
 // Rows written as one string, for telling boards apart.
 const used = new Set<string>();
 
+// Only this slot (counting from 1), when a world's slots are made side by
+// side, each by its own process.
+const SLOT = process.env.SLOT ? Number(process.env.SLOT) : undefined;
+
+type Made = Level & { taps: number };
+
 // The best board for each slot, with its own seeded random numbers, so
-// adding a world doesn't change the boards of another.
-function make(slots: Slot[], seed: number, tries: number) {
-  const levels: (Level & { taps: number })[] = [];
-  const rnd = mulberry32(seed);
+// adding a world doesn't change the boards of another. With `perSlot`,
+// each slot has its own random numbers too, so slots can be made apart.
+function make(slots: Slot[], seed: number, tries: number, perSlot = false) {
+  const levels: Made[] = [];
+  let rnd = mulberry32(seed);
   for (const [n, slot] of slots.entries()) {
+    if (SLOT !== undefined && n + 1 !== SLOT) continue;
+    if (perSlot) rnd = mulberry32(seed + n);
     let best:
       | { rows: string[]; score: number; taps: number; switches: number }
       | undefined;
@@ -352,9 +471,11 @@ function make(slots: Slot[], seed: number, tries: number) {
         throw e;
       }
       const key = rows.join('/');
-      if (used.has(key) || !hasAll(rows, slot) || !solvable(rows)) continue;
+      const cap = slot.people ? LIMIT : Infinity;
+      if (used.has(key) || !hasAll(rows, slot) || !solvable(rows, true, cap))
+        continue;
       if (!allNeeded(rows, slot)) continue;
-      const result = tapsToWin(rows);
+      const result = tapsToWin(rows, cap);
       if (!result) continue;
       const { taps, switches } = result;
       if (
@@ -373,7 +494,7 @@ function make(slots: Slot[], seed: number, tries: number) {
         rocks +
         (slot.alone ? 2 * distance(rows, 'F', 't') : 0);
       // The dead-end check is the slow one, so it runs last.
-      if ((!best || score > best.score) && noDeadEnds(rows))
+      if ((!best || score > best.score) && noDeadEnds(rows, cap))
         best = { rows, score, taps, switches };
     }
     if (!best) {
@@ -409,14 +530,42 @@ const WORLDS = {
   fire: { slots: FIRE, seed: 20261112, intro: FIRE.length, tries: 100000 },
   water: { slots: SLOTS, seed: 20261111, intro: 7, tries: 100000 },
   earth: { slots: EARTH, seed: 20261113, intro: 3, tries: 20000 },
+  // With four friends a board is slow to check, so each slot is made by a
+  // process of its own, all at once.
+  air: { slots: AIR, seed: 20261114, intro: 3, tries: 10000, perSlot: true },
+  people: { slots: PEOPLE, seed: 20261115, intro: 1, tries: 6000 },
 };
 type World = keyof typeof WORLDS;
 
+// Makes each slot of a world in its own process (this script again, with
+// SLOT set), and gathers their levels in slot order.
+async function apart(name: World): Promise<Made[]> {
+  const runs = WORLDS[name].slots.map(
+    (_, n) =>
+      new Promise<Made[]>((resolve, reject) => {
+        const out = `temp/levels-${name}-${n + 1}.json`;
+        const env = { ...process.env, WORLD: name, SLOT: `${n + 1}`, OUT: out };
+        spawn(process.execPath, [...process.execArgv, process.argv[1]], {
+          env,
+          stdio: 'inherit',
+        }).on('exit', (code) =>
+          code === 0
+            ? resolve(JSON.parse(readFileSync(out, 'utf8')))
+            : reject(new Error(`slot ${n + 1} failed`))
+        );
+      })
+  );
+  return (await Promise.all(runs)).flat();
+}
+
 // A world's levels: the first few each bring in one new thing, in the
 // order of their slots; after them, levels go from fewest taps to most.
-function world(name: World) {
+async function world(name: World) {
   const { slots, seed, intro, tries } = WORLDS[name];
-  const levels = make(slots, seed, TRIES ?? tries);
+  const perSlot = 'perSlot' in WORLDS[name];
+  const levels = perSlot
+    ? await apart(name)
+    : make(slots, seed, TRIES ?? tries);
   return [
     ...levels.slice(0, intro),
     ...levels.slice(intro).sort((p, q) => p.taps - q.taps),
@@ -426,10 +575,18 @@ function world(name: World) {
 // WORLD=earth makes only that world, into OUT (temp/ by default), to try
 // slots out without waiting for the others.
 const only = process.env.WORLD as World | undefined;
-const names = only ? [only] : (Object.keys(WORLDS) as World[]);
-const ordered = names.flatMap(world);
-const out = only
-  ? (process.env.OUT ?? `temp/levels-${only}.json`)
-  : 'src/levels.json';
-writeFileSync(out, JSON.stringify(ordered, null, 2) + '\n');
-console.log(`${ordered.length} levels in ${out}`);
+if (only && SLOT !== undefined) {
+  // One slot of a world being made apart: its level, with its taps.
+  const { slots, seed, tries } = WORLDS[only];
+  const levels = make(slots, seed, TRIES ?? tries, true);
+  writeFileSync(process.env.OUT!, JSON.stringify(levels));
+} else {
+  const names = only ? [only] : (Object.keys(WORLDS) as World[]);
+  const ordered = [];
+  for (const name of names) ordered.push(...(await world(name)));
+  const out = only
+    ? (process.env.OUT ?? `temp/levels-${only}.json`)
+    : 'src/levels.json';
+  writeFileSync(out, JSON.stringify(ordered, null, 2) + '\n');
+  console.log(`${ordered.length} levels in ${out}`);
+}

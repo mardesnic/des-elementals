@@ -14,6 +14,10 @@ const FLAME_CORE =
   'M50 92c-10 0-16-7-16-16 0-8 6-13 10-21 2 6 6 8 8 8 2-4 4-8 6-12 4 8 6 16 6 24 0 10-6 17-14 17z';
 const DROP = 'M50 6c13 21 31 39 31 59a31 31 0 0 1-62 0c0-20 18-38 31-59z';
 const LEAF = 'M50 6C82 26 86 64 50 94 14 64 18 26 50 6z';
+const HEART =
+  'M50 90C20 68 8 50 8 34 8 20 18 10 31 10c9 0 15 5 19 12 4-7 10-12 19-12 13 0 23 10 23 24 0 16-12 34-42 56z';
+const TORNADO =
+  'M8 18q42-16 84 0-6 16-20 26-10 8-13 22-3 14-9 26-6 4-8-2-2-12-6-24-4-12-14-22Q14 34 8 18z';
 
 const Face = ({ y }: { y: number }) => (
   <g className='art-face'>
@@ -32,8 +36,63 @@ const SmallFlame = ({ x, y, size }: { x: number; y: number; size: number }) => (
 );
 
 // `home` is for one standing in its own temple, where fire becomes the sun,
-// water a rain cloud and earth a green tree.
+// water a rain cloud, earth a green tree and air a puffing cloud that
+// blows a breeze.
 export function Friend({ element, home }: { element: Element; home: boolean }) {
+  if (home && element === 'air')
+    return (
+      <Svg>
+        <g className='art-gust'>
+          <path d='M76 40h18M80 54h16M76 68h18' />
+        </g>
+        <path
+          className='art-breeze'
+          d='M22 76a16 16 0 0 1-4-30 22 22 0 0 1 40-14 18 18 0 0 1 22 26 14 14 0 0 1-10 18z'
+        />
+        <g className='art-cheek'>
+          <circle cx='28' cy='58' r='6' />
+          <circle cx='54' cy='58' r='6' />
+        </g>
+        <g className='art-face'>
+          <circle cx='35' cy='48' r='4.5' />
+          <circle cx='51' cy='48' r='4.5' />
+        </g>
+        <circle className='art-blow' cx='68' cy='54' r='4.5' />
+      </Svg>
+    );
+  if (element === 'man' || element === 'woman')
+    return (
+      <Svg>
+        {element === 'woman' && (
+          <path className='art-hair' d='M28 40c0-24 44-24 44 0v22H28z' />
+        )}
+        <path
+          className={element === 'man' ? 'art-shirt' : 'art-dress'}
+          d={
+            element === 'man'
+              ? 'M30 96V72q0-10 20-10t20 10v24z'
+              : 'M26 96l10-30q14-6 28 0l10 30z'
+          }
+        />
+        <circle className='art-skin' cx='50' cy='40' r='20' />
+        <path
+          className='art-hair'
+          d='M30 36q2-18 20-18t20 18q-8-8-20-8t-20 8z'
+        />
+        <Face y={40} />
+      </Svg>
+    );
+  if (element === 'air')
+    return (
+      <Svg>
+        <path className='art-air' d={TORNADO} />
+        <path
+          className='art-swirl'
+          d='M16 22q34 10 68 0M28 40q22 8 44 0M40 58q10 5 20 0'
+        />
+        <Face y={30} />
+      </Svg>
+    );
   if (home && element === 'earth')
     return (
       <Svg>
@@ -126,6 +185,9 @@ const SIGNS: Record<Element, string> = {
   fire: FLAME,
   water: DROP,
   earth: LEAF,
+  air: TORNADO,
+  man: HEART,
+  woman: HEART,
 };
 
 // A small temple, its roof in its element's colour with its sign on top.
@@ -148,8 +210,8 @@ const Temple = ({ element }: { element: Element }) => (
   </Svg>
 );
 
-// `awake` is for a temple, brazier or wheel with its own element
-// on it; `open` for a grate or sluice held up.
+// `awake` is for a temple, brazier, wheel or vane with its own element
+// on it; `open` for a grate, sluice or wind gate held up.
 export function TileArt({
   tile,
   awake,
@@ -220,23 +282,20 @@ export function TileArt({
           <path className='art-shine-line' d='M26 34l12-10M24 48l6-5' />
         </Svg>
       );
-    case 'bramble':
+    case 'coal':
       return (
         <Svg>
+          <ellipse className='art-shadow' cx='50' cy='88' rx='42' ry='7' />
+          <g className='art-lump'>
+            <path d='M8 86l6-24 20-8 14 12-4 20z' />
+            <path d='M44 88l2-22 22-12 22 10 2 24z' />
+            <path d='M24 58l10-24 22-8 16 14-6 22-24 6z' />
+          </g>
           <path
-            className='art-thorn'
-            d='M14 52l-9-4M20 30l-6-8M40 16l-2-10M62 16l3-10M82 30l6-8M86 52l9-4M80 76l8 6M20 76l-8 6'
+            className='art-lump-edge'
+            d='M14 62l20-8M46 66l22-12M34 34l22-8'
           />
-          <circle className='art-leaf' cx='34' cy='58' r='24' />
-          <circle className='art-leaf' cx='66' cy='58' r='24' />
-          <circle className='art-leaf' cx='50' cy='38' r='26' />
-          <path
-            className='art-leaf-dark'
-            d='M14 66c6 14 18 18 36 18s30-4 36-18c-8 6-20 8-36 8s-28-2-36-8z'
-          />
-          <circle className='art-berry' cx='38' cy='44' r='5' />
-          <circle className='art-berry' cx='62' cy='36' r='5' />
-          <circle className='art-berry' cx='60' cy='62' r='5' />
+          <path className='art-glint' d='M40 40l6-3M62 66l6-3M20 70l4-2' />
         </Svg>
       );
     case 'fireTemple':
@@ -245,6 +304,55 @@ export function TileArt({
       return <Temple element='water' />;
     case 'earthTemple':
       return <Temple element='earth' />;
+    case 'airTemple':
+      return <Temple element='air' />;
+    case 'heartTemple':
+      // With both people in it, a big heart shines over it.
+      return awake ? (
+        <Svg>
+          <path className='art-heart art-heart--big' d={HEART} />
+        </Svg>
+      ) : (
+        <Temple element='man' />
+      );
+    case 'vane':
+      return (
+        <Svg>
+          <path className='art-post' d='M50 92V30' />
+          <path className='art-vane-cross' d='M34 56h32' />
+          <g className={awake ? 'art-vane art-vane--spinning' : 'art-vane'}>
+            <path className='art-arrow' d='M18 30h58' />
+            <path className='art-arrow-head' d='M90 30L72 20v20z' />
+            <path
+              className='art-arrow-tail'
+              d='M12 18l14 12-14 12h12l12-12-12-12z'
+            />
+          </g>
+          <circle className='art-hub' cx='50' cy='30' r='5' />
+        </Svg>
+      );
+    case 'windGate':
+      return (
+        <Svg>
+          {open ? (
+            <path className='art-cloth-rolled' d='M14 22h72' />
+          ) : (
+            <g className='art-cloth'>
+              <path d='M14 18h20v70q-10 6-20 0z' />
+              <path d='M40 18h20v70q-10 6-20 0z' />
+              <path d='M66 18h20v70q-10 6-20 0z' />
+            </g>
+          )}
+          <rect
+            className='art-beam-air'
+            x='4'
+            y='4'
+            width='92'
+            height='14'
+            rx='5'
+          />
+        </Svg>
+      );
     case 'pit':
       return (
         <Svg>
@@ -428,6 +536,54 @@ export function Rainbow() {
           d={`M${10 + k * 9} 106a${90 - k * 9} ${90 - k * 9} 0 0 1 ${180 - k * 18} 0`}
         />
       ))}
+    </svg>
+  );
+}
+
+// Birds that fly over the board when a level with air is won.
+export function Birds() {
+  return (
+    <div className='birds' aria-hidden='true'>
+      {[0, 1, 2].map((k) => (
+        <svg key={k} className={`bird bird--${k}`} viewBox='0 0 60 40'>
+          <path
+            className='bird__wing'
+            d='M30 22C22 8 10 6 2 12c10 0 18 4 24 12z'
+          />
+          <ellipse className='bird__body' cx='34' cy='24' rx='14' ry='9' />
+          <path className='bird__beak' d='M47 21l8 3-8 3z' />
+          <circle className='bird__eye' cx='42' cy='21' r='2' />
+          <path
+            className='bird__wing'
+            d='M34 22c4-12 14-16 22-12-8 2-14 6-18 14z'
+          />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+// A little house that comes up on grass when the last level is won.
+export function House({ i }: { i: number }) {
+  return (
+    <svg
+      className='art house'
+      viewBox='0 0 100 100'
+      aria-hidden='true'
+      style={{ animationDelay: `${(i % 7) * 90}ms` }}
+    >
+      <rect className='house__wall' x='20' y='46' width='60' height='46' />
+      <path className='house__roof' d='M10 50L50 14l40 36z' />
+      <rect
+        className='house__door'
+        x='43'
+        y='64'
+        width='14'
+        height='28'
+        rx='3'
+      />
+      <rect className='house__window' x='26' y='56' width='11' height='11' />
+      <rect className='house__window' x='63' y='56' width='11' height='11' />
     </svg>
   );
 }

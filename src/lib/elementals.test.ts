@@ -26,11 +26,11 @@ describe('outcome', () => {
     expect(outcome('fire', 'water', false)).toBe('blocked');
   });
 
-  it('lets fire melt ice into water and burn brambles to grass', () => {
+  it('lets fire melt ice into water and burn coals to grass', () => {
     expect(outcome('fire', 'ice', false)).toEqual({ becomes: 'water' });
-    expect(outcome('fire', 'bramble', false)).toEqual({ becomes: 'grass' });
+    expect(outcome('fire', 'coal', false)).toEqual({ becomes: 'grass' });
     expect(outcome('water', 'ice', false)).toBe('blocked');
-    expect(outcome('water', 'bramble', false)).toBe('blocked');
+    expect(outcome('water', 'coal', false)).toBe('blocked');
   });
 
   it('lets through gates only while they are held up', () => {
@@ -188,7 +188,7 @@ describe('earth', () => {
     expect(outcome('water', 'pit', false)).toBe('blocked');
     expect(outcome('earth', 'water', false)).toBe('blocked');
     expect(outcome('earth', 'ice', false)).toBe('blocked');
-    expect(outcome('earth', 'bramble', false)).toBe('blocked');
+    expect(outcome('earth', 'coal', false)).toBe('blocked');
   });
 
   it('pushes a round stone onto grass and walks after it', () => {
@@ -243,5 +243,85 @@ describe('earth', () => {
     expect(isWon(move(b, water, 'earth', 5))).toBe(true);
     expect(movesToWin(b, s)).toBe(3);
     expect(tapsToWin(b, s)).toEqual({ taps: 3, switches: 2 });
+  });
+});
+
+describe('air', () => {
+  it('flies straight on over grass, water and holes until stopped', () => {
+    const { b, s } = setup('Z.~o.#');
+    expect(move(b, s, 'air', 1).at.air).toBe(4);
+  });
+
+  it('stops at the edge of the board, without going round a row', () => {
+    const { b, s } = setup('Z..', '...');
+    expect(move(b, s, 'air', 1).at.air).toBe(2);
+    expect(move(b, s, 'air', 3).at.air).toBe(3);
+  });
+
+  it('is stopped by coals, ice, stones and friends', () => {
+    for (const ch of '*i@F') {
+      const { b, s } = setup(`Z..${ch}`);
+      expect(move(b, s, 'air', 1).at.air).toBe(2);
+    }
+  });
+
+  it('does not move at all when the square next to it is blocked', () => {
+    const { b, s } = setup('Z#.');
+    expect(move(b, s, 'air', 1)).toBe(s);
+  });
+
+  it('flies over its own temple without stopping there', () => {
+    const { b, s } = setup('Zm..');
+    const after = move(b, s, 'air', 1);
+    expect(after.at.air).toBe(3);
+    expect(isWon(after)).toBe(false);
+    expect(isWon(move(b, setup('Z.m#').s, 'air', 1))).toBe(true);
+  });
+
+  it('holds the wind gate up for the others, but not for itself', () => {
+    const { b, s } = setup('Zv', 'FV', 't.');
+    const held = move(b, s, 'air', 1);
+    expect(isHeld(held, 'air')).toBe(true);
+    expect(shownOpen(held, 3)).toBe(true);
+    expect(move(b, held, 'fire', 3).at.fire).toBe(3);
+    expect(move(b, s, 'fire', 3).at.fire).toBe(2);
+  });
+
+  it('can be walked to only where it can stop', () => {
+    const { b, s } = setup('Z...', '#...');
+    const stops = walks(b, s, 'air');
+    expect([...stops.keys()].sort()).toEqual([1, 3, 5, 7]);
+    // The way there: the square it heads for at the start of each slide.
+    expect(stops.get(5)).toEqual([1, 7, 6]);
+  });
+});
+
+describe('the man and the woman', () => {
+  it('walk like the others, and can do nothing special', () => {
+    for (const tile of ['water', 'ice', 'coal', 'pit', 'boulder'] as const)
+      expect(outcome('man', tile, false)).toBe('blocked');
+    expect(outcome('woman', 'grass', false)).toBe('step');
+  });
+
+  it('share only their own temple, and only with each other', () => {
+    const { b, s } = setup('MhL', 'F..');
+    const one = move(b, s, 'man', 1);
+    expect(one.at.man).toBe(1);
+    expect(isAwake(one, 1)).toBe(false);
+    const both = move(b, one, 'woman', 1);
+    expect(both.at.woman).toBe(1);
+    expect(isAwake(both, 1)).toBe(true);
+    // Nobody else gets in, and the two can't share grass.
+    const fireIn = move(b, setup('MhF', 'L..').s, 'fire', 1);
+    expect(move(b, fireIn, 'man', 1).at.man).toBe(0);
+    const { s: g } = setup('ML.', 'h..');
+    expect(move(b, g, 'man', 1).at.man).toBe(0);
+  });
+
+  it('win only with everyone home', () => {
+    const { b, s } = setup('Mh', 'L.');
+    const there = move(b, move(b, s, 'man', 1), 'woman', 3);
+    expect(isWon(there)).toBe(false);
+    expect(isWon(move(b, there, 'woman', 1))).toBe(true);
   });
 });

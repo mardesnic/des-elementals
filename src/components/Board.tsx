@@ -12,10 +12,13 @@ import {
   type State,
 } from '../lib/elementals';
 import type { Strings } from '../lib/i18n';
-import { Flower, Friend, Rainbow, TileArt } from './Art';
+import type { World } from '../lib/levels';
+import { WORLDS } from '../lib/levels';
+import { Birds, Flower, Friend, House, Rainbow, TileArt } from './Art';
 
 // Whether a flower grows on grass square i once the level is won: about
-// half of them, the same ones every time.
+// half of them, the same ones every time. On the last level, a little
+// house comes up on the rest.
 const blooms = (i: number) => (i * 7 + 3) % 11 < 6;
 
 // A drag shorter than this is a tap.
@@ -28,7 +31,7 @@ export function Board({
   state,
   active,
   won,
-  finale,
+  world,
   reach,
   bump,
   onTap,
@@ -40,8 +43,9 @@ export function Board({
   state: State;
   active: Element;
   won: boolean;
-  // The last level is won: a rainbow comes out.
-  finale?: boolean;
+  // Its world: a win there has a rainbow from water on, flowers from
+  // earth on, birds from air on, and houses on the last level.
+  world: World;
   // Squares the active one can walk to, shown with a dot.
   reach: Set<number>;
   // The last one that couldn't move, counted so each bump shakes again.
@@ -53,6 +57,7 @@ export function Board({
   t: Strings;
 }) {
   const b = boardOf(level);
+  const from = (w: World) => WORLDS.indexOf(world) >= WORLDS.indexOf(w);
   const tiles = useRef<HTMLDivElement>(null);
   const down = useRef<{ x: number; y: number; i: number } | null>(null);
 
@@ -121,7 +126,14 @@ export function Board({
               aria-label={said ? `${t.tiles[tile]}, ${said}` : t.tiles[tile]}
             >
               <TileArt tile={tile} awake={awake} open={open} i={i} />
-              {won && tile === 'grass' && blooms(i) && <Flower i={i} />}
+              {won &&
+                from('earth') &&
+                tile === 'grass' &&
+                (blooms(i) ? (
+                  <Flower i={i} />
+                ) : (
+                  from('people') && <House i={i} />
+                ))}
             </span>
           );
         })}
@@ -130,11 +142,18 @@ export function Board({
       {elementsIn(state).map((e) => {
         const i = state.at[e]!;
         const stuck = bump?.who === e;
+        // The two people side by side, when they share their temple.
+        const paired =
+          (e === 'man' || e === 'woman') &&
+          state.at.man === state.at.woman &&
+          `friend--${e === 'man' ? 'left' : 'right'}`;
         return (
           <span
             key={e}
             className={[
               'friend',
+              `friend--${e}`,
+              paired,
               e === active && !won && 'friend--active',
               // Smaller on its own place, so the glow shows around it.
               isAwake(state, i) && `friend--home friend--on-${state.tiles[i]}`,
@@ -166,7 +185,8 @@ export function Board({
           </span>
         );
       })}
-      {finale && <Rainbow />}
+      {won && from('water') && <Rainbow />}
+      {won && from('air') && <Birds />}
     </div>
   );
 }

@@ -2,14 +2,14 @@
 // on plain numbers, so millions of random boards can be tried. The level
 // tests check the levels again with the game's own rules.
 //
-// A state is a row of numbers: which ice, brambles and pits are changed
+// A state is a row of numbers: which ice, coals and pits are changed
 // (one bit each), where each friend stands, then where each round stone is.
 
 const GRASS = 0;
 const ROCK = 1;
 const WATER = 2;
 const ICE = 3;
-const BRAMBLE = 4;
+const COAL = 4;
 // Fire holds the brazier to keep the grate up; water the wheel for the
 // sluice. Each wins in its own temple.
 const BRAZIER = 5;
@@ -21,6 +21,13 @@ const SPRING = 10;
 const PIT = 11;
 const TREE = 12;
 const BRIDGE = 13;
+// Air spins the vane to keep the wind gate up, and wins in its temple.
+const VANE = 15;
+const WIND_GATE = 16;
+const BREEZE = 17;
+// The man and the woman meet in the heart temple, the one square where
+// two may stand.
+const HEART = 18;
 // Only ever worked out: a round stone on grass. In water it is a bridge.
 const BOULDER = 14;
 
@@ -29,11 +36,14 @@ const CODES: Record<string, number> = {
   F: GRASS,
   W: GRASS,
   E: GRASS,
+  Z: GRASS,
+  M: GRASS,
+  L: GRASS,
   '@': GRASS,
   '#': ROCK,
   '~': WATER,
   i: ICE,
-  '*': BRAMBLE,
+  '*': COAL,
   a: BRAZIER,
   A: GRATE,
   b: WHEEL,
@@ -43,23 +53,31 @@ const CODES: Record<string, number> = {
   o: PIT,
   e: TREE,
   '=': BRIDGE,
+  v: VANE,
+  V: WIND_GATE,
+  m: BREEZE,
+  h: HEART,
 };
 
 const FIRE = 0;
 const WET = 1;
 const EARTH = 2;
-const STARTS = 'FWE';
-const HOMES = [TORCH, SPRING, TREE];
+const AIR = 3;
+const MAN = 4;
+const WOMAN = 5;
+const STARTS = 'FWEZML';
+const HOMES = [TORCH, SPRING, TREE, BREEZE, HEART, HEART];
 
 type Board = {
   w: number;
   n: number;
   tiles: Uint8Array;
-  // The bit of each ice, bramble or pit square, or -1.
+  // The bit of each ice, coal or pit square, or -1.
   bit: Int8Array;
   bits: number;
   next: number[][];
-  // Who is on the board, in order: fire, water, earth.
+  // Who is on the board, in order: fire, water, earth, air, the man and
+  // the woman.
   kinds: number[];
   // Their places in a state, or -1 for one not on the board.
   slot: number[];
@@ -80,7 +98,7 @@ function load(rows: string[], bridges = true): Board {
   const tiles = new Uint8Array(n);
   const bit = new Int8Array(n).fill(-1);
   let bits = 0;
-  const at = [-1, -1, -1];
+  const at = [-1, -1, -1, -1, -1, -1];
   const stones: number[] = [];
   for (let i = 0; i < n; i++) {
     const ch = flat[i];
@@ -88,11 +106,11 @@ function load(rows: string[], bridges = true): Board {
     const e = STARTS.indexOf(ch);
     if (e >= 0) at[e] = i;
     if (ch === '@') stones.push(i);
-    if (tiles[i] === ICE || tiles[i] === BRAMBLE || tiles[i] === PIT)
+    if (tiles[i] === ICE || tiles[i] === COAL || tiles[i] === PIT)
       bit[i] = bits++;
   }
-  const kinds = [FIRE, WET, EARTH].filter((e) => at[e] >= 0);
-  const slot = [-1, -1, -1];
+  const kinds = [FIRE, WET, EARTH, AIR, MAN, WOMAN].filter((e) => at[e] >= 0);
+  const slot = [-1, -1, -1, -1, -1, -1];
   kinds.forEach((e, k) => (slot[e] = 1 + k));
   const next = Array.from({ length: n }, (_, i) => {
     const x = i % w;
@@ -198,31 +216,45 @@ const isOn = (b: Board, st: State, i: number) => {
 const holds = (b: Board, st: State, e: number, tile: number) =>
   b.slot[e] >= 0 && b.tiles[st[b.slot[e]]] === tile;
 
-// Whether friend e can step onto square i.
+// Whether friend e can step onto square i: nobody is there, or it is the
+// heart temple and the other of the two people is there.
 function canStep(b: Board, st: State, e: number, i: number) {
-  if (isOn(b, st, i)) return false;
+  if (isOn(b, st, i)) {
+    if (b.tiles[i] !== HEART || (e !== MAN && e !== WOMAN)) return false;
+    const other = b.slot[e === MAN ? WOMAN : MAN];
+    let on = 0;
+    for (let j = 1; j < b.len - b.stones; j++) if (st[j] === i) on++;
+    if (other < 0 || st[other] !== i || on !== 1) return false;
+  }
   switch (tileAt(b, st, i)) {
     case GRASS:
     case TORCH:
     case SPRING:
     case TREE:
+    case BREEZE:
+    case HEART:
     case BRAZIER:
     case WHEEL:
+    case VANE:
     case BRIDGE:
       return true;
     case GRATE:
       return e !== FIRE && holds(b, st, FIRE, BRAZIER);
     case SLUICE:
       return e !== WET && holds(b, st, WET, WHEEL);
+    case WIND_GATE:
+      return e !== AIR && holds(b, st, AIR, VANE);
     case WATER:
-      return e === WET;
+      return e === WET || e === AIR;
+    case PIT:
+      return e === AIR;
     default:
       return false;
   }
 }
 
 // Changes `out`, a copy of `st`, to the state after friend e, standing on
-// `from`, changes square i: fire melts ice or burns a bramble, earth fills
+// `from`, changes square i: fire melts ice or burns a coal, earth fills
 // a pit or pushes a stone. False if nothing changes.
 function change(
   b: Board,
@@ -234,10 +266,7 @@ function change(
 ): boolean {
   if (isOn(b, st, i)) return false;
   const t = tileAt(b, st, i);
-  if (
-    ((t === ICE || t === BRAMBLE) && e === FIRE) ||
-    (t === PIT && e === EARTH)
-  ) {
+  if (((t === ICE || t === COAL) && e === FIRE) || (t === PIT && e === EARTH)) {
     out[0] |= 1 << b.bit[i];
     return true;
   }
@@ -255,6 +284,23 @@ function change(
   for (let j = b.len - b.stones; j < b.len; j++)
     if (out[j] === i) out[j] = beyond;
   return true;
+}
+
+// Where air, standing on `from` and heading for the square next to it
+// `to`, stops: it goes on the same way until the next square is the edge
+// or something it can't fly over. `from` itself if it can't go at all.
+function slideEnd(b: Board, st: State, from: number, to: number) {
+  const step = to - from;
+  const across = step === 1 || step === -1;
+  let at = from;
+  let next = to;
+  while (canStep(b, st, AIR, next)) {
+    at = next;
+    next = at + step;
+    if (next < 0 || next >= b.n) break;
+    if (across && Math.floor(next / b.w) !== Math.floor(at / b.w)) break;
+  }
+  return at;
 }
 
 function won(b: Board, st: State) {
@@ -276,7 +322,12 @@ function successors(
     const from = st[s];
     for (const i of b.next[from]) {
       for (let j = 0; j < b.len; j++) out[j] = st[j];
-      if (canStep(b, st, e, i)) {
+      if (e === AIR) {
+        const end = slideEnd(b, st, from, i);
+        if (end === from) continue;
+        out[s] = end;
+        visit(out);
+      } else if (canStep(b, st, e, i)) {
         out[s] = i;
         visit(out);
       } else if (change(b, st, e, from, i, out)) visit(out);
@@ -287,7 +338,8 @@ function successors(
 // Every state reachable from the start, one after another in `data`, and
 // their numbers by key; wins are not gone past. With `toWin`, it stops at
 // the first win.
-function reachable(b: Board, toWin = false) {
+// With `limit`, it gives up past that many states, and says so.
+function reachable(b: Board, toWin = false, limit = Infinity) {
   const index = new Index(b.size);
   let data = new Int32Array(b.len * 1024);
   let count = 0;
@@ -308,24 +360,33 @@ function reachable(b: Board, toWin = false) {
   const st = new Int32Array(b.len);
   const out = new Int32Array(b.len);
   for (let q = 0; q < count && !(toWin && found); q++) {
+    if (count > limit) return { data, count, index, found, over: true };
     for (let j = 0; j < b.len; j++) st[j] = data[q * b.len + j];
     if (!won(b, st)) successors(b, st, out, add);
   }
-  return { data, count, index, found };
+  return { data, count, index, found, over: false };
 }
 
 // Whether the level can be won, one step at a time; with `bridges` false,
 // without ever pushing a stone into water.
-export function solvable(rows: string[], bridges = true): boolean {
+// With `limit`, a level with more states than that to look through first is
+// turned down too.
+export function solvable(
+  rows: string[],
+  bridges = true,
+  limit = Infinity
+): boolean {
   const b = load(rows, bridges);
-  return b.kinds.length > 0 && reachable(b, true).found;
+  return b.kinds.length > 0 && reachable(b, true, limit).found;
 }
 
 // Whether every state a player can reach can still be won, so no move
 // ever spoils the level (for example by one blocking another in).
-export function noDeadEnds(rows: string[]): boolean {
+// With `limit`, a level with more states than that is turned down too.
+export function noDeadEnds(rows: string[], limit = Infinity): boolean {
   const b = load(rows);
-  const { data, count, index } = reachable(b);
+  const { data, count, index, over } = reachable(b, false, limit);
+  if (over) return false;
   // Each state's states one step back, as lists in one array.
   const from: number[] = [];
   const to: number[] = [];
@@ -366,16 +427,18 @@ export function noDeadEnds(rows: string[]): boolean {
 }
 
 // The fewest taps to win, where a tap walks someone anywhere they can get
-// to, or walks them up to an ice, bramble, pit or stone and changes it; and
+// to, or walks them up to an ice, coal, pit or stone and changes it; and
 // how often the one moving changes on that way.
 export function taps(
-  rows: string[]
+  rows: string[],
+  limit = Infinity
 ): { taps: number; switches: number } | undefined {
   const b = load(rows);
   if (!b.kinds.length) return undefined;
   if (won(b, b.start)) return { taps: 0, switches: 0 };
   const seen = new Index(b.size);
   seen.set(keyOf(b, b.start), 0);
+  let count = 1;
   type Node = { st: number[]; who: number; sw: number };
   let layer: Node[] = [{ st: b.start, who: -1, sw: 0 }];
   // Marks squares reached by the current walk; each walk gets a new stamp.
@@ -392,17 +455,25 @@ export function taps(
         stamp++;
         const walk = [st[s]];
         reach[st[s]] = stamp;
+        const here = st.slice();
         for (let w = 0; w < walk.length; w++)
-          for (const i of b.next[walk[w]])
-            if (reach[i] !== stamp && canStep(b, st, e, i)) {
+          for (const n of b.next[walk[w]]) {
+            // Air flies on from where it is now to where it stops, and
+            // may fly back over the square it started on.
+            here[s] = walk[w];
+            if (!canStep(b, here, e, n)) continue;
+            const i = e === AIR ? slideEnd(b, here, walk[w], n) : n;
+            if (reach[i] !== stamp) {
               reach[i] = stamp;
               walk.push(i);
             }
+          }
         const add = (out: number[]) => {
           if (won(b, out)) best = Math.min(best, switches);
           const k = keyOf(b, out);
           if (seen.get(k) < 0) {
             seen.set(k, 0);
+            if (++count > limit) return undefined;
             next.push({ st: out, who: e, sw: switches });
           }
         };

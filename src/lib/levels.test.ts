@@ -51,6 +51,10 @@ function deadEnds(level: Level): number {
   return states.size - good.size;
 }
 
+// With all four friends, checking a level with the game's own rules takes
+// a while.
+const SLOW = 60_000;
+
 describe('levels', () => {
   it('are there', () => {
     expect(LEVELS.length).toBeGreaterThanOrEqual(20);
@@ -70,12 +74,18 @@ describe('levels', () => {
 
   it.each(LEVELS)('$id has its friends and their temples', (level) => {
     const s = parse(level);
-    const friends = ELEMENTS.slice(0, WORLDS.indexOf(worldOf(level)) + 1);
+    const world = worldOf(level);
+    const friends =
+      world === 'people'
+        ? ELEMENTS
+        : ELEMENTS.slice(0, WORLDS.indexOf(world) + 1);
     expect(elementsIn(s)).toEqual(friends);
-    for (const e of ELEMENTS)
-      expect(s.tiles.filter((t) => t === `${e}Temple`)).toHaveLength(
-        friends.includes(e) ? 1 : 0
+    const temples = (tile: string) => s.tiles.filter((t) => t === tile);
+    for (const e of ['fire', 'water', 'earth', 'air'])
+      expect(temples(`${e}Temple`)).toHaveLength(
+        friends.includes(e as 'fire') ? 1 : 0
       );
+    expect(temples('heartTemple')).toHaveLength(world === 'people' ? 1 : 0);
     expect(isWon(s)).toBe(false);
   });
 
@@ -95,14 +105,25 @@ describe('levels', () => {
     expect(worldAfter(LEVELS[both - 1])).toBe('water');
     expect(worldAfter(LEVELS[both])).toBeUndefined();
     expect(worldAfter(LEVELS.at(-1)!)).toBeUndefined();
-    const bramble = LEVELS.findIndex((l) => l.rows.join('').includes('*'));
-    expect(hintFor(LEVELS[bramble])).toBe('bramble');
+    const coal = LEVELS.findIndex((l) => l.rows.join('').includes('*'));
+    expect(hintFor(LEVELS[coal])).toBe('coal');
     const earth = LEVELS.findIndex((l) => worldOf(l) === 'earth');
     expect(hintFor(LEVELS[earth])).toBe('earth');
     expect(worldAfter(LEVELS[earth - 1])).toBe('earth');
     const stone = LEVELS.findIndex((l) => l.rows.join('').includes('@'));
     expect(worldOf(LEVELS[stone])).toBe('earth');
     expect(hintFor(LEVELS[stone])).toBe('boulder');
+    const air = LEVELS.findIndex((l) => worldOf(l) === 'air');
+    expect(hintFor(LEVELS[air])).toBe('air');
+    expect(worldAfter(LEVELS[air - 1])).toBe('air');
+    const vane = LEVELS.findIndex((l) => l.rows.join('').includes('v'));
+    expect(worldOf(LEVELS[vane])).toBe('air');
+    expect(hintFor(LEVELS[vane])).toBe('vane');
+    // One last level with the man and the woman.
+    expect(LEVELS.filter((l) => worldOf(l) === 'people')).toEqual([
+      LEVELS.at(-1),
+    ]);
+    expect(hintFor(LEVELS.at(-1)!)).toBe('people');
   });
 
   it('keep fire alone away from ice, which would only block it', () => {
@@ -118,12 +139,16 @@ describe('levels', () => {
     for (const ch of 'ab') expect(kinds(first(ch)).size).toBe(2);
   });
 
-  it.each(LEVELS)('$id can be won', (level) => {
-    expect(solvable(level.rows)).toBe(true);
-    const b = boardOf(level);
-    expect(movesToWin(b, parse(level))).toBeGreaterThan(0);
-    expect(tapsToWin(b, parse(level))).toBeDefined();
-  });
+  it.each(LEVELS)(
+    '$id can be won',
+    (level) => {
+      expect(solvable(level.rows)).toBe(true);
+      const b = boardOf(level);
+      expect(movesToWin(b, parse(level))).toBeGreaterThan(0);
+      expect(tapsToWin(b, parse(level))).toBeDefined();
+    },
+    SLOW
+  );
 
   // Turning any obstacle into rock makes the level impossible, so each one
   // has to be used.
@@ -131,7 +156,7 @@ describe('levels', () => {
     const flat = level.rows.join('');
     const w = level.rows[0].length;
     for (let i = 0; i < flat.length; i++) {
-      if (!'*iaAbBo@'.includes(flat[i])) continue;
+      if (!'*iaAbBo@vV'.includes(flat[i])) continue;
       const rows = level.rows.map((r, y) =>
         y === Math.floor(i / w)
           ? r.slice(0, i % w) + '#' + r.slice((i % w) + 1)
@@ -155,7 +180,9 @@ describe('levels', () => {
   });
 
   // No way to lose: whatever a kid does, the level can still be won.
-  it.each(LEVELS)('$id has no dead ends', (level) => {
-    expect(deadEnds(level)).toBe(0);
-  });
+  it.each(LEVELS)(
+    '$id has no dead ends',
+    (level) => expect(deadEnds(level)).toBe(0),
+    SLOW
+  );
 });

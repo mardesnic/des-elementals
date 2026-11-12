@@ -1,8 +1,16 @@
 // The rules: a few element friends on a small board of tiles, who win when
 // each of them reaches its own temple: there fire becomes the sun, water
-// a rain cloud and earth a green tree.
+// a rain cloud, earth a green tree and air a cloud that blows. On the last
+// level a man and a woman join them, and meet in the heart temple.
 
-export const ELEMENTS = ['fire', 'water', 'earth'] as const;
+export const ELEMENTS = [
+  'fire',
+  'water',
+  'earth',
+  'air',
+  'man',
+  'woman',
+] as const;
 export type Element = (typeof ELEMENTS)[number];
 
 // One letter a tile in a level's map.
@@ -11,7 +19,7 @@ export const TILES = {
   '#': 'rock',
   '~': 'water',
   i: 'ice',
-  '*': 'bramble',
+  '*': 'coal',
   a: 'brazier',
   A: 'grate',
   b: 'wheel',
@@ -22,28 +30,62 @@ export const TILES = {
   '@': 'boulder',
   '=': 'bridge',
   e: 'earthTemple',
+  v: 'vane',
+  V: 'windGate',
+  m: 'airTemple',
+  h: 'heartTemple',
 } as const;
 export type Tile = (typeof TILES)[keyof typeof TILES];
 
 // Each element has its own place to wake, and its own thing to hold that
 // opens a way for the other: fire keeps the brazier burning and the grate
-// stays up; water turns the wheel and the sluice stays up.
+// stays up; water turns the wheel and the sluice stays up; air spins the
+// weather vane and the wind gate stays up.
 const HOME: Partial<Record<Tile, Element>> = {
   fireTemple: 'fire',
   waterTemple: 'water',
   earthTemple: 'earth',
+  airTemple: 'air',
 };
 const HOLDER: Partial<Record<Tile, Element>> = {
   brazier: 'fire',
   wheel: 'water',
+  vane: 'air',
 };
-const GATE: Partial<Record<Tile, Element>> = { grate: 'fire', sluice: 'water' };
+const GATE: Partial<Record<Tile, Element>> = {
+  grate: 'fire',
+  sluice: 'water',
+  windGate: 'air',
+};
+// The two people share one temple, where they meet.
+const PEOPLE: readonly Element[] = ['man', 'woman'];
+const HOME_OF: Record<Element, Tile> = {
+  fire: 'fireTemple',
+  water: 'waterTemple',
+  earth: 'earthTemple',
+  air: 'airTemple',
+  man: 'heartTemple',
+  woman: 'heartTemple',
+};
+// Whether `e` may stand on square i with `o` already there: only the two
+// people, together in their temple.
+const together = (s: State, e: Element, o: Element, i: number) =>
+  s.tiles[i] === 'heartTemple' &&
+  e !== o &&
+  [e, o].every((p) => PEOPLE.includes(p));
 // Whose place or thing a tile is, if anyone's.
 export const ownerOf = (t: Tile) => HOME[t] ?? HOLDER[t] ?? GATE[t];
 export const isGate = (t: Tile) => GATE[t] !== undefined;
 
 // Where each element starts, written on grass.
-const STARTS: Record<string, Element> = { F: 'fire', W: 'water', E: 'earth' };
+const STARTS: Record<string, Element> = {
+  F: 'fire',
+  W: 'water',
+  E: 'earth',
+  Z: 'air',
+  M: 'man',
+  L: 'woman',
+};
 
 export type Level = { id: string; rows: string[] };
 
@@ -107,8 +149,10 @@ export function isHeld(s: State, e: Element, besides?: Element): boolean {
 }
 
 // Whether square i is woken: a temple, brazier or wheel with its own
-// element on it. Anyone else can stand there, but nothing happens.
+// element on it, or the heart temple with both people in it. Anyone else
+// can stand there, but nothing happens.
 export function isAwake(s: State, i: number): boolean {
+  if (s.tiles[i] === 'heartTemple') return PEOPLE.every((p) => s.at[p] === i);
   const owner = HOME[s.tiles[i]] ?? HOLDER[s.tiles[i]];
   return owner !== undefined && s.at[owner] === i;
 }
@@ -133,23 +177,29 @@ export function outcome(e: Element, tile: Tile, open: boolean): Outcome {
     case 'fireTemple':
     case 'waterTemple':
     case 'earthTemple':
+    case 'airTemple':
+    case 'heartTemple':
     case 'brazier':
     case 'wheel':
+    case 'vane':
     case 'bridge':
       return 'step';
     case 'grate':
     case 'sluice':
+    case 'windGate':
       return open ? 'step' : 'blocked';
     case 'rock':
     case 'boulder':
       return 'blocked';
     case 'water':
-      return e === 'water' ? 'step' : 'blocked';
+      return e === 'water' || e === 'air' ? 'step' : 'blocked';
     case 'ice':
       return e === 'fire' ? { becomes: 'water' } : 'blocked';
-    case 'bramble':
+    case 'coal':
       return e === 'fire' ? { becomes: 'grass' } : 'blocked';
     case 'pit':
+      // Air flies over a hole; earth fills it.
+      if (e === 'air') return 'step';
       return e === 'earth' ? { becomes: 'grass' } : 'blocked';
   }
 }
@@ -180,17 +230,38 @@ export function pushTo(
 // What `e` moving onto square `to` would do, ignoring whether it is next
 // to it.
 export function outcomeAt(s: State, e: Element, to: number): Outcome {
-  if (elementsIn(s).some((o) => s.at[o] === to)) return 'blocked';
+  if (elementsIn(s).some((o) => s.at[o] === to && !together(s, e, o, to)))
+    return 'blocked';
   const tile = s.tiles[to];
   const by = GATE[tile];
   return outcome(e, tile, by ? isHeld(s, by, e) : false);
 }
 
+// Where air, heading from square `from` to the square next to it `to`,
+// stops: it keeps going the same way until the next square is the edge or
+// something it can't fly over. `from` itself if it can't go at all.
+export function slideEnd(b: Board, s: State, from: number, to: number) {
+  const step = to - from;
+  let at = from;
+  let next = to;
+  while (outcomeAt(s, 'air', next) === 'step') {
+    at = next;
+    next = at + step;
+    // Off the board, or round onto the next row.
+    if (!isNextTo(b, at, next)) break;
+  }
+  return at;
+}
+
 // The state after `e` tries to move to square `to`, or the same state if
-// it can't.
+// it can't. Air goes on past `to` until something stops it.
 export function move(b: Board, s: State, e: Element, to: number): State {
   const from = s.at[e];
   if (from === undefined || !isNextTo(b, from, to)) return s;
+  if (e === 'air') {
+    const end = slideEnd(b, s, from, to);
+    return end === from ? s : { ...s, at: { ...s.at, air: end } };
+  }
   const beyond = pushTo(b, s, e, from, to);
   if (beyond !== undefined) {
     const tiles = s.tiles.slice();
@@ -210,12 +281,15 @@ export function move(b: Board, s: State, e: Element, to: number): State {
 export function isWon(s: State): boolean {
   const everyone = elementsIn(s);
   return (
-    everyone.length > 0 && everyone.every((e) => HOME[s.tiles[s.at[e]!]] === e)
+    everyone.length > 0 &&
+    everyone.every((e) => s.tiles[s.at[e]!] === HOME_OF[e])
   );
 }
 
 // The squares `e` can walk to without changing anything, each with the
-// way there (not counting where it stands).
+// way there (not counting where it stands): the squares it steps on, one
+// by one. For air, the squares it can stop on, and the way there is the
+// square it heads for at the start of each slide.
 export function walks(b: Board, s: State, e: Element): Map<number, number[]> {
   const start = s.at[e]!;
   const ways = new Map<number, number[]>([[start, []]]);
@@ -223,11 +297,14 @@ export function walks(b: Board, s: State, e: Element): Map<number, number[]> {
   while (queue.length) {
     const i = queue.shift()!;
     const here = { ...s, at: { ...s.at, [e]: i } };
-    for (const n of neighbours(b, i))
-      if (!ways.has(n) && outcomeAt(here, e, n) === 'step') {
-        ways.set(n, [...ways.get(i)!, n]);
-        queue.push(n);
+    for (const n of neighbours(b, i)) {
+      if (outcomeAt(here, e, n) !== 'step') continue;
+      const end = e === 'air' ? slideEnd(b, here, i, n) : n;
+      if (!ways.has(end)) {
+        ways.set(end, [...ways.get(i)!, n]);
+        queue.push(end);
       }
+    }
   }
   ways.delete(start);
   return ways;

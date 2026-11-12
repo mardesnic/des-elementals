@@ -24,8 +24,8 @@
   --wood-dark: #8a5a2b;
   --leaf: #37b24d;
   --leaf-dark: #2b8a3e;
-  --thorn: #5c940d;
-  --berry: #c2255c;
+  --coal: #343a40;
+  --coal-edge: #868e96;
   --ice-face: #e7f5ff;
   --ice-edge: #74c0fc;
   --glow-fire: #ffe066;
@@ -37,6 +37,15 @@
   --boulder: #d9b48a;
   --boulder-dark: #b08458;
   --glow-earth: #b2f2bb;
+  --air: #99e9f2;
+  --air-dark: #15aabf;
+  --glow-air: #c5f6fa;
+  --breeze: #e3fafc;
+  --heart: #f06595;
+  --glow-heart: #ffdeeb;
+  --skin: #ffd8a8;
+  --hair: #5c3d2e;
+  --shirt: #4c6ef5;
   --danger: #e03131;
   --ring: #ffffff;
   --radius: 18px;
@@ -75,7 +84,8 @@
     --wood-dark: #74481f;
     --leaf: #2f9e44;
     --leaf-dark: #237032;
-    --thorn: #94d82d;
+    --coal: #212529;
+    --coal-edge: #868e96;
     --ice-face: #d0ebff;
     --ice-edge: #4dabf7;
     --glow-fire: #b8860b;
@@ -87,6 +97,15 @@
     --boulder: #b8956c;
     --boulder-dark: #8c6a4c;
     --glow-earth: #2b8a3e;
+    --air: #66d9e8;
+    --air-dark: #0c8599;
+    --glow-air: #0b7285;
+    --breeze: #c5f6fa;
+    --heart: #e64980;
+    --glow-heart: #a61e4d;
+    --skin: #f4c48e;
+    --hair: #4a2f22;
+    --shirt: #4263eb;
     --danger: #c92a2a;
     --ring: #e8eaee;
   }
@@ -309,6 +328,10 @@ h2 {
   background: radial-gradient(var(--glow-earth) 30%, var(--grass) 72%);
 }
 
+.tile--awake.tile--of-air {
+  background: radial-gradient(var(--glow-air) 30%, var(--grass) 72%);
+}
+
 /* A round stone pushed into water lies in it as a bridge. */
 .tile--bridge {
   background: linear-gradient(var(--water), var(--water-deep));
@@ -381,9 +404,20 @@ h2 {
   stroke-linecap: round;
 }
 
-.art-thorn {
-  stroke: var(--thorn);
-  stroke-width: 5;
+/* A pile of coal, which fire sets alight. */
+.art-lump {
+  fill: var(--coal);
+}
+
+.art-lump-edge {
+  stroke: var(--coal-edge);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.art-glint {
+  stroke: var(--shine);
+  stroke-width: 4;
   stroke-linecap: round;
 }
 
@@ -393,10 +427,6 @@ h2 {
 
 .art-leaf-dark {
   fill: var(--leaf-dark);
-}
-
-.art-berry {
-  fill: var(--berry);
 }
 
 .art-wood {
@@ -460,6 +490,23 @@ h2 {
   fill: var(--drop);
 }
 
+.art-beam-air {
+  fill: var(--air-dark);
+}
+
+/* The wind gate: cloth that hangs down, or is rolled up when open. */
+.art-cloth {
+  fill: var(--breeze);
+  stroke: var(--air-dark);
+  stroke-width: 3;
+}
+
+.art-cloth-rolled {
+  stroke: var(--breeze);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
 .art-plank {
   fill: var(--wood);
   stroke: var(--wood-dark);
@@ -487,6 +534,156 @@ h2 {
 
 .art-roof-earth {
   fill: var(--leaf);
+}
+
+.art-roof-man {
+  fill: var(--heart);
+}
+
+/* The man and the woman, and the heart that shines when they meet. */
+.art-skin {
+  fill: var(--skin);
+}
+
+.art-hair {
+  fill: var(--hair);
+}
+
+.art-shirt {
+  fill: var(--shirt);
+}
+
+.art-dress {
+  fill: var(--heart);
+}
+
+.art-heart {
+  fill: var(--heart);
+}
+
+.art-heart--big {
+  transform-origin: 50% 50%;
+  animation: beat 1s ease-in-out infinite;
+}
+
+@keyframes beat {
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.tile--heartTemple.tile--awake {
+  background: radial-gradient(var(--glow-heart) 30%, var(--grass) 72%);
+}
+
+/* Together in their temple, the two stand side by side, in front of the
+   heart. */
+.friend--left .friend__face,
+.friend--right .friend__face {
+  scale: 0.6 !important;
+  background: none;
+}
+
+.friend--left .friend__face {
+  translate: -30% 22% !important;
+}
+
+.friend--right .friend__face {
+  translate: 30% 22% !important;
+}
+
+.house {
+  transform-origin: 50% 90%;
+  animation: grow 0.5s ease-out backwards;
+}
+
+.house__wall {
+  fill: #fff4e6;
+  stroke: var(--wood-dark);
+  stroke-width: 3;
+}
+
+.house__roof {
+  fill: #e8590c;
+}
+
+.house__door {
+  fill: var(--wood);
+}
+
+.house__window {
+  fill: #74c0fc;
+  stroke: var(--wood-dark);
+  stroke-width: 2;
+}
+
+.art-roof-air {
+  fill: var(--air-dark);
+}
+
+/* Air: a little tornado, and in its temple a cloud that blows. */
+.art-air {
+  fill: var(--air);
+}
+
+.art-swirl {
+  fill: none;
+  stroke: var(--air-dark);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.art-breeze {
+  fill: var(--breeze);
+  stroke: var(--air-dark);
+  stroke-width: 3;
+}
+
+.art-cheek {
+  fill: #ffa8a8;
+}
+
+.art-gust {
+  stroke: var(--air-dark);
+  stroke-width: 5;
+  stroke-linecap: round;
+  animation: gust 1s ease-in-out infinite;
+}
+
+@keyframes gust {
+  50% {
+    transform: translateX(5px);
+    opacity: 0.4;
+  }
+}
+
+.art-hub {
+  fill: var(--iron);
+}
+
+/* The weather vane: its arrow swings round while air holds it. */
+.art-vane {
+  transform-origin: 50px 30px;
+}
+
+.art-vane--spinning {
+  animation: swing 1.2s ease-in-out infinite alternate;
+}
+
+.art-vane-cross {
+  stroke: var(--iron);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.art-arrow {
+  stroke: var(--iron);
+  stroke-width: 6;
+}
+
+.art-arrow-head,
+.art-arrow-tail {
+  fill: var(--air-dark);
 }
 
 .art-earth {
@@ -611,7 +808,80 @@ h2 {
   top: 4%;
   width: 100%;
   pointer-events: none;
-  animation: rise 1.2s ease-out 0.4s backwards;
+  /* It comes out, then fades a little so everyone shows through. */
+  animation:
+    rise 1.2s ease-out 0.4s backwards,
+    dim 1s ease-in-out 3s forwards;
+}
+
+@keyframes dim {
+  to {
+    opacity: 0.3;
+  }
+}
+
+/* Birds fly across the board when a level with air is won. */
+.birds {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bird {
+  position: absolute;
+  left: 0;
+  width: 18%;
+  animation: fly 4s ease-in-out 0.6s both;
+}
+
+.bird--0 {
+  top: 12%;
+}
+
+.bird--1 {
+  top: 26%;
+  width: 14%;
+  animation-delay: 0.9s;
+}
+
+.bird--2 {
+  top: 40%;
+  width: 16%;
+  animation-delay: 1.3s;
+}
+
+.bird__body {
+  fill: #74c0fc;
+}
+
+.bird__wing {
+  fill: #339af0;
+  transform-origin: 32px 22px;
+  animation: flap 0.3s ease-in-out infinite alternate;
+}
+
+.bird__beak {
+  fill: #fab005;
+}
+
+.bird__eye {
+  fill: #1a1d23;
+}
+
+@keyframes fly {
+  from {
+    transform: translate(-110%, 30%);
+  }
+  to {
+    transform: translate(620%, -20%);
+  }
+}
+
+@keyframes flap {
+  to {
+    transform: scaleY(-0.6);
+  }
 }
 
 .rainbow__band {
@@ -656,6 +926,15 @@ h2 {
 @keyframes turn {
   to {
     transform: rotate(1turn);
+  }
+}
+
+@keyframes swing {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(-1);
   }
 }
 
@@ -704,6 +983,12 @@ h2 {
   pointer-events: none;
 }
 
+/* Air flies a long way at once, so it takes a little longer. */
+.friend--air {
+  transition-duration: 0.3s;
+  transition-timing-function: ease-out;
+}
+
 .friend__face {
   display: grid;
   place-items: center;
@@ -725,7 +1010,8 @@ h2 {
 /* In its temple, the sun or cloud floats above the roof. */
 .friend--on-fireTemple .friend__face,
 .friend--on-waterTemple .friend__face,
-.friend--on-earthTemple .friend__face {
+.friend--on-earthTemple .friend__face,
+.friend--on-airTemple .friend__face {
   scale: 0.95;
   translate: 0 -26%;
 }
@@ -855,6 +1141,12 @@ h2 {
   .friend__face,
   .art-flower,
   .art-wheel--turning,
+  .art-gust,
+  .art-heart--big,
+  .house,
+  .bird,
+  .bird__wing,
+  .art-vane--spinning,
   .art-rays,
   .art-rain,
   .rainbow {
@@ -957,4 +1249,11 @@ h2 {
   background: var(--surface);
   color: var(--text);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+/* The little round mouth air blows through, in its temple. */
+.art-blow {
+  fill: none;
+  stroke: var(--face);
+  stroke-width: 3;
 }

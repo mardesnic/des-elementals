@@ -90,7 +90,7 @@ describe('tap', () => {
     const level = { id: 'alone', rows: ['F.#', '.*t'] };
     const game = newGame(level);
     expect(game.active).toBe('fire');
-    // The bush is in the way: tapping the temple only shakes fire.
+    // The coal is in the way: tapping the temple only shakes fire.
     expect(tap(game, 5, level).stuck).toBe('fire');
     const burnt = tap(game, 4, level).steps.at(-1)!;
     expect(burnt.state.tiles[4]).toBe('grass');
@@ -119,6 +119,15 @@ describe('tap on small boards', () => {
     go(6); // pick water
     const { steps } = go(11);
     expect(steps.map((g) => g.state.at.water)).toEqual([7, 8, 9, 10, 11]);
+  });
+
+  it('flies air from stop to stop, one slide a step', () => {
+    const { go } = play(['Z...', '#..m', 'tEeF']);
+    go(0); // pick air
+    const { steps } = go(5);
+    expect(steps.map((g) => g.state.at.air)).toEqual([3, 7, 5]);
+    // It can't stop on a square in the middle of a slide.
+    expect(go(2)).toMatchObject({ steps: [], stuck: 'air' });
   });
 
   it('walks up to ice far away and melts it', () => {
