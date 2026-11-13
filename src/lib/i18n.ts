@@ -32,7 +32,7 @@ const en = {
     air: 'Fire, water, earth and air',
     people: 'Everyone together',
   } satisfies Record<World, string>,
-  next: 'Next level',
+  next: 'Next',
   finale: 'You did it all!',
   elements: {
     fire: 'Fire',
@@ -113,7 +113,7 @@ const hr: Strings = {
     air: 'Vatra, voda, zemlja i zrak',
     people: 'Svi zajedno',
   },
-  next: 'Sljedeća razina',
+  next: 'Dalje',
   finale: 'Sve je riješeno!',
   elements: {
     fire: 'Vatra',
