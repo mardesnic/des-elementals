@@ -221,7 +221,7 @@ export default function App() {
             />
           </div>
 
-          {game.won ? (
+          {game.won && (
             <section className='card solved'>
               <h2>{last ? t.finale : t.solved}</h2>
               {!last && (
@@ -235,7 +235,11 @@ export default function App() {
                 </div>
               )}
             </section>
-          ) : (
+          )}
+          <div
+            className={game.won ? 'under under--hidden' : 'under'}
+            inert={!!game.won}
+          >
             <div className='bar'>
               <span className='bar__level'>{t.level(n)}</span>
               <div className='tools'>
@@ -257,7 +261,7 @@ export default function App() {
                 </button>
               </div>
             </div>
-          )}
+          </div>
         </>
       )}
 
